@@ -14,11 +14,18 @@ export function activate(context: vscode.ExtensionContext) {
     // The command has been defined in the package.json file
     // Now provide the implementation of the command with  registerCommand
     // The commandId parameter must match the command field in package.json
-    let disposable = vscode.commands.registerCommand('extension.sayHello', () => {
+    let disposable = vscode.commands.registerCommand('VMS.buildProject', () => {
         // The code you place here will be executed every time your command is executed
 
         // Display a message box to the user
         vscode.window.showInformationMessage('Hello World!');
+
+        //TODO:
+        //  1. Get files to send to VMS (project configuration:"filter")
+        //  2. Open SSH connection (project configuration:["host", "port", "keys"])
+        //  3. Send files
+        //  4. Run build command
+        //  5. Show output to user
     });
 
     context.subscriptions.push(disposable);
