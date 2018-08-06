@@ -2,14 +2,17 @@
 import * as vscode from 'vscode';
 import * as ssh2 from 'ssh2';
 import { inspect } from 'util';
+//import * as path from 'path';
 
 export function activate(context: vscode.ExtensionContext) {
 
-    let disposable = vscode.commands.registerCommand('VMS.buildProject', () => {
+    context.subscriptions.push( vscode.commands.registerCommand('VMS.buildProject', () => {
         RunBuildCommand();
-    });
+    }));
 
-    context.subscriptions.push(disposable);
+    context.subscriptions.push( vscode.commands.registerCommand('VMS.debugProject', () => {
+        RunDebugCommand();
+    }));
 }
 
 //Get or create new output channel named 'VMS Build'
@@ -22,7 +25,7 @@ function getOutputChannel(): vscode.OutputChannel {
 	return _channel;
 }
 
-//process command
+//process BUILD command
 async function RunBuildCommand() {
     try {
         //Get files to send to VMS (project configuration:"filter")
@@ -30,8 +33,8 @@ async function RunBuildCommand() {
         let files : vscode.Uri[] = await vscode.workspace.findFiles('**/*.c');
 
         //TODO: use project configuration:["host", "port", "hostKeys"])
-        let sftpClient = await CreateSSHConnection();
-        let sftp = await CreateSFTP(sftpClient);
+        let sshClient = await CreateSSHConnection();
+        let sftp = await CreateSFTP(sshClient);
 
         //Send files
         for(let file of files) {
@@ -39,16 +42,40 @@ async function RunBuildCommand() {
         }
 
         //Close SFTP connection
-        sftpClient.end();
+        sftp.end();
 
         //Run build command
-        let sshClient = await CreateSSHConnection();
         let sshResult = await ExecCommand(sshClient, `build all`);
 
         //Show output to user
-        getOutputChannel().appendLine(`Result: ${sshResult.stdout}`);
+        getOutputChannel().append(sshResult.stdout);
         if (sshResult.stderr) {
-            getOutputChannel().appendLine(`Errors: ${sshResult.stderr}`);
+            getOutputChannel().append(sshResult.stderr);
+        }
+
+        //Close connection
+        sshClient.end();
+    }
+    catch(error) {
+        getOutputChannel().appendLine(inspect(error));
+    }
+    return true;
+}
+
+//process DEBUG command
+async function RunDebugCommand() {
+    try {
+
+        //TODO: use project configuration:["host", "port", "hostKeys"])
+        let sshClient = await CreateSSHConnection();
+
+        //Run debug command
+        let sshResult = await ExecCommand(sshClient, `debug`);
+
+        //Show output to user
+        getOutputChannel().append(sshResult.stdout);
+        if (sshResult.stderr) {
+            getOutputChannel().append(sshResult.stderr);
         }
 
         //Close connection
@@ -111,9 +138,10 @@ function ExecCommand(client : ssh2.Client, command: string) : Promise<ExecCmdRes
 
 //
 function SendFile(sftp : ssh2.SFTPWrapper, file : vscode.Uri ) : Promise<boolean> {
-    getOutputChannel().appendLine(`Sending file: ${file.fsPath}`);
+    let relativeFile = vscode.workspace.asRelativePath(file);
+    getOutputChannel().appendLine(`Sending file: ${relativeFile}`);
     return new Promise((resolve : (ok:boolean) => void, reject : (error:Error) => void) => {
-        sftp.fastPut(file.fsPath, file.path, (error: Error) => {
+        sftp.fastPut(file.fsPath, relativeFile, (error: Error) => {
             if (error) {
                 reject(error);
             }
