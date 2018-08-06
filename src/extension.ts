@@ -99,7 +99,6 @@ function ExecCommand(client : ssh2.Client, command: string) : Promise<ExecCmdRes
             }
             let result : ExecCmdResult = {stdout: '', stderr: ''};
             stream.on('close', (code : any, signal : any) => {
-                console.log('Stream :: close :: code: ' + code + ', signal: ' + signal);
                 resolve(result);
               }).on('data', function(data : string) {
                 result.stdout += data;
