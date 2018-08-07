@@ -23,4 +23,5 @@ export default function ToOutputChannel( outStr : string, endl : boolean = true)
     else {
         GetOutputChannel().append(outStr);
     }
+    GetOutputChannel().show();
 }

@@ -4,6 +4,7 @@ import {ExtensionContext} from 'vscode';
  
 import RunBuildCommand from './run-build-command';
 import RunDebugCommand from './run-debug-command';
+import EnumAllFiles from './enum-all-files';
 
 export function activate(context: ExtensionContext) {
 
@@ -14,6 +15,11 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push( commands.registerCommand('VMS.debugProject', () => {
         RunDebugCommand();
     }));
+
+    context.subscriptions.push( commands.registerCommand('VMS.enumAllFiles', () => {
+        EnumAllFiles();
+    }));
+
 }
 
 

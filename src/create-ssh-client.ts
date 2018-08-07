@@ -3,13 +3,13 @@ import {Client} from 'ssh2';
 import GetSetting from './workspace-settings';
 //
 export default function CreateSSHClient()  {
-    return new Promise((resolve : (client : Client) => void, reject: (error: Error) => void) => {
+    return new Promise(async (resolve : (client : Client) => void, reject: (error: Error) => void) => {
         let client = new Client();
         //Get all from project config
-        let host = GetSetting<string>('host');
-        let port = GetSetting<number>('port');
-        let username = GetSetting<string>('username');
-        let password = GetSetting<string>('password');
+        let host = await GetSetting<string>('host');
+        let port = await GetSetting<number>('port');
+        let username = await GetSetting<string>('username');
+        let password = await GetSetting<string>('password');
         if (!host || !port || !username || !password) {
             console.log("setting not found: host,port,username,password");
             return;

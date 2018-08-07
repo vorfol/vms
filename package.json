@@ -12,6 +12,7 @@
     ],
     "activationEvents": [
         "onCommand:VMS.buildProject",
+        "onCommand:VMS.enumAllFiles",
         "onCommand:VMS.debugProject"
     ],
     "main": "./out/extension",
@@ -20,6 +21,10 @@
             {
                 "command": "VMS.buildProject",
                 "title": "Build on VMS"
+            },
+            {
+                "command": "VMS.enumAllFiles",
+                "title": "Test all files in workspace"
             },
             {
                 "command": "VMS.debugProject",

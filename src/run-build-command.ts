@@ -13,7 +13,7 @@ import GetSetting from './workspace-settings';
 export default async function RunBuildCommand() {
     try {
         //Get files to send to VMS
-        let filter = GetSetting<string>('filter');
+        let filter = await GetSetting<string>('filter');
         if (!filter) {
             console.log("Error while getting filter");
             return;
