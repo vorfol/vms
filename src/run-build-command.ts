@@ -1,21 +1,25 @@
 import {Uri} from 'vscode';
 import {workspace} from 'vscode';
 import {inspect} from 'util';
-//import * as fs from 'fs';
-//import * as vscode from 'vscode';
 
 import ToOutputChannel from './output-channel';
 import CreateSSHConnection from './create-ssh-client';
 import CreateSFTP from './create-sftp';
 import SendFile from './send-file';
 import ExecCommand from './exec-command';
+import GetSetting from './workspace-settings';
 
 //process BUILD command
 export default async function RunBuildCommand() {
     try {
-        //Get files to send to VMS (project configuration:"filter")
-        //TODO: use project configuration:["includeFiles"]
-        let files : Uri[] = await workspace.findFiles('**/*.c');
+        //Get files to send to VMS
+        let filter = GetSetting<string>('filter');
+        if (!filter) {
+            console.log("Error while getting filter");
+            return;
+        }
+
+        let files : Uri[] = await workspace.findFiles(filter);
 
         let sshClient = await CreateSSHConnection();
         let sftp = await CreateSFTP(sshClient);
@@ -43,6 +47,5 @@ export default async function RunBuildCommand() {
     catch(error) {
         ToOutputChannel(inspect(error));
     }
-    return true;
 }
 

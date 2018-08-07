@@ -7,11 +7,10 @@ import ExecCommand from './exec-command';
 //process DEBUG command
 export default async function RunDebugCommand() {
     try {
-
-        //TODO: use project configuration:["host", "port", "hostKeys"])
         let sshClient = await CreateSSHConnection();
 
         //Run debug command
+        //TODO: use settings
         let sshResult = await ExecCommand(sshClient, `debug`);
 
         //Show output to user
@@ -26,7 +25,6 @@ export default async function RunDebugCommand() {
     catch(error) {
         ToOutputChannel(inspect(error));
     }
-    return true;
 }
 
 
