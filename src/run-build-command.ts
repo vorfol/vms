@@ -1,6 +1,8 @@
 import {Uri} from 'vscode';
 import {workspace} from 'vscode';
-import { inspect } from 'util';
+import {inspect} from 'util';
+//import * as fs from 'fs';
+//import * as vscode from 'vscode';
 
 import ToOutputChannel from './output-channel';
 import CreateSSHConnection from './create-ssh-client';
@@ -15,7 +17,6 @@ export default async function RunBuildCommand() {
         //TODO: use project configuration:["includeFiles"]
         let files : Uri[] = await workspace.findFiles('**/*.c');
 
-        //TODO: use project configuration:["host", "port", "hostKeys"])
         let sshClient = await CreateSSHConnection();
         let sftp = await CreateSFTP(sshClient);
 

@@ -25,7 +25,32 @@
                 "command": "VMS.debugProject",
                 "title": "Debug on VMS"
             }
-        ]
+        ],
+        "configuration" : {
+            "title": "OpenVMS settings",
+            "properties": {
+                "open-vms.host" : {
+                    "type" : "string",
+                    "default" : "localhost",
+                    "description": "OpenVMS host to build, run and debug current workspace"
+                },
+                "open-vms.port" : {
+                    "type" : "number",
+                    "default" : "22",
+                    "description": "OpenVMS ssh port"
+                },
+                "open-vms.username" : {
+                    "type" : "string",
+                    "default" : "foo",
+                    "description": "Username, ...only for test, should be removed!"
+                },
+                "open-vms.password" : {
+                    "type" : "string",
+                    "default" : "bar",
+                    "description": "Username, ...only for test, should be removed!"
+                }
+            }
+        }
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",
