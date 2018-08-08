@@ -4,7 +4,7 @@ import {ClientChannel} from 'ssh2';
 //
 type ExecCmdResult = { stdout: string, stderr: string};
 
-export default function ExecCommand(client : Client, command: string) : Promise<ExecCmdResult> {
+export function ExecCommand(client : Client, command: string) : Promise<ExecCmdResult> {
     return new Promise((resolve : (result : ExecCmdResult) => void, reject : (error:Error) => void) => {
         client.exec(command, (error : Error, stream : ClientChannel) => {
             if (error) {

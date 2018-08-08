@@ -16,7 +16,7 @@ function GetOutputChannel(): OutputChannel {
 }
 
 //Puts string to output channel
-export default function ToOutputChannel( outStr : string, endl : boolean = true) : void {
+export function ToOutputChannel( outStr : string, endl : boolean = true) : void {
     if (endl) {
         GetOutputChannel().appendLine(outStr);
     }

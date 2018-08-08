@@ -4,7 +4,7 @@ import {window} from 'vscode';
 
 //Get value from workspace settings 
 //if not found, show message and open settings, returns undefined
-export default async function GetValue<T>(section:string) : Promise<T | undefined> {
+export async function GetValue<T>(section:string) : Promise<T | undefined> {
 
     let configuration = workspace.getConfiguration("open-vms");
     let config = configuration.inspect(section);
@@ -19,16 +19,18 @@ export default async function GetValue<T>(section:string) : Promise<T | undefine
         // //     console.log(result);
         // // }
         //TODO: open workspace setting
-        // workspace.findFiles('.vscode/settings.json').then(
+        // workspace.findFiles('.code-workspace').then(
         //     (files) => {
-        //         window.showTextDocument(files[0]).then(
-        //             (editor) => {
-        //                 //console.log(editor);
-        //             },
-        //             (error) => {
-        //                 console.log(error);
-        //             }
-        //         );
+        //         if (files && files[0]) {
+        //             window.showTextDocument(files[0]).then(
+        //                 (editor) => {
+        //                     //console.log(editor);
+        //                 },
+        //                 (error) => {
+        //                     console.log(error);
+        //                 }
+        //             );
+        //         }
         //     },
         //     (error) => {
         //         console.log(error);

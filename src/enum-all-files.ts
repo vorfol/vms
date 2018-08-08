@@ -1,9 +1,9 @@
 import {workspace} from 'vscode';
 import {RelativePattern} from 'vscode';
 
-import ToOutputChannel from './output-channel';
+import {ToOutputChannel} from './output-channel';
 
-export default async function EnumAllFiles() {
+export async function EnumAllFiles() {
     if (workspace.workspaceFolders) {
         workspace.workspaceFolders.forEach((folder) => {
             //BUG: for MemFS does start search from "file://d:", not from "memfs:/"

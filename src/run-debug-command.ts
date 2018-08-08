@@ -1,13 +1,13 @@
 import { inspect } from 'util';
 
-import ToOutputChannel from './output-channel';
-import CreateSSHConnection from './create-ssh-client';
-import ExecCommand from './exec-command';
+import {ToOutputChannel} from './output-channel';
+import {CreateSSHClient} from './create-ssh-client';
+import {ExecCommand} from './exec-command';
 
 //process DEBUG command
-export default async function RunDebugCommand() {
+export async function RunDebugCommand() {
     try {
-        let sshClient = await CreateSSHConnection();
+        let sshClient = await CreateSSHClient();
 
         //Run debug command
         //TODO: use settings
