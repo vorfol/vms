@@ -34,9 +34,9 @@ export class SSHSettings {
     }
 
     /**
-     * Test password and return immediate true or false, input box shows up asynchronously.
+     * Test password is non-empty.
      *
-     * The returned value will be `true` if the password is not empty. Otherwise the
+     * The returned value will be `true` if the password is entered and it is not empty. Otherwise the
      * returned value will be `false`.
      *
      */

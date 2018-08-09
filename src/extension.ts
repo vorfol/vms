@@ -1,6 +1,5 @@
 'use strict';
-import {commands} from 'vscode';
-import {ExtensionContext} from 'vscode';
+import {commands, ExtensionContext} from 'vscode';
  
 import {RunBuildCommand} from './run-build-command';
 import {RunDebugCommand} from './run-debug-command';
@@ -22,7 +21,7 @@ export function activate(context: ExtensionContext) {
 
 }
 
-
 // this method is called when your extension is deactivated
 export function deactivate() {
+
 }
