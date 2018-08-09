@@ -3,7 +3,13 @@ import {workspace, Uri} from 'vscode';
 import {SFTPWrapper} from 'ssh2';
 
 import {ToOutputChannel} from './output-channel';
-//
+
+/**
+ * Send file using SFTP client
+ * 
+ * @param sftp SFTP channel
+ * @param file file to send
+ */
 export function SendFile(sftp : SFTPWrapper, file : Uri ) : Promise<boolean> {
     let relativeFile = workspace.asRelativePath(file);
     ToOutputChannel(`Sending file: ${relativeFile}`);
@@ -13,7 +19,9 @@ export function SendFile(sftp : SFTPWrapper, file : Uri ) : Promise<boolean> {
             if (error) {
                 reject(error);
             }
-            resolve(true);
+            else {
+                resolve(true);
+            }
         });
     });
 }

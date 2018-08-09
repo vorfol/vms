@@ -3,7 +3,9 @@ import {ToOutputChannel} from './output-channel';
 import {CreateSSHClient} from './create-ssh-client';
 import {ExecSSHCommand} from './exec-ssh-command';
 
-//process DEBUG command
+/** Process DEBUG command
+ * 
+ */
 export async function RunDebugCommand() {
     try {
         let sshClient = await CreateSSHClient();

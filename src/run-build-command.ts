@@ -8,12 +8,19 @@ import {FilesToSend} from './files-to-send';
 
 let _commandBuilAll = `build all`;
 
-//process BUILD command
+/** Process BUILD command
+ * 
+ */
 export async function RunBuildCommand() {
     try {
+
+        //get list before creating client to check 'filter' settings... ugly?
+        let files = await FilesToSend();
+
         let sshClient = await CreateSSHClient();
         let sftp = await CreateSFTP(sshClient);
-        let files = await FilesToSend();
+        
+        
         for(let file of files) {
             await SendFile(sftp, file);
         }

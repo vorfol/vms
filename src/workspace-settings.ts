@@ -10,7 +10,10 @@ export class WorkspaceSettings {
         return this._configurationSection;
     }
 
-    //Get value from workspace settings only. Ignore default value.
+    /** 
+     * Get value from workspace settings only. Ignore default value.
+     * 
+     */
     public static GetValue<T>(section:string) : T | undefined {
 
         let configuration = workspace.getConfiguration(this._configurationSection);
@@ -22,7 +25,10 @@ export class WorkspaceSettings {
         return configuration.get<T>(section);
     }
 
-    //Show message and open workspace settings
+    /** 
+     * Show error message and open workspace settings. Ignore all results.
+     * 
+     */
     public static WarnUser() {
         window.showErrorMessage(this._errorMessage)
             .then((value => {

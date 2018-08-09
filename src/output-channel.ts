@@ -1,13 +1,16 @@
 import { window } from 'vscode';
 import { OutputChannel } from 'vscode';
 
-//Channel to output
+/** Channel to output
+ */
 let _channel: OutputChannel;
 
-//Channel name
+/** Channel name
+ */
 const _outputChannelName = 'VMS Build';
 
-//Get or create new output channel named 'VMS Build'
+/** Get or create new output channel named [`VMS Build`](#_outputChannelName)
+ */
 function GetOutputChannel(): OutputChannel {
 	if (!_channel) {
 		_channel = window.createOutputChannel(_outputChannelName);
@@ -15,7 +18,9 @@ function GetOutputChannel(): OutputChannel {
 	return _channel;
 }
 
-//Puts string to output channel
+/** Puts string to output channel and focuses on it
+ * 
+ */
 export function ToOutputChannel( outStr : string, endl : boolean = true) : void {
     if (endl) {
         GetOutputChannel().appendLine(outStr);
