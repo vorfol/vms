@@ -20,15 +20,18 @@
         "commands": [
             {
                 "command": "VMS.buildProject",
-                "title": "Build on VMS"
-            },
-            {
-                "command": "VMS.enumAllFiles",
-                "title": "Test all files in workspace"
+                "title": "Build on VMS",
+                "category": "OpenVMS"
             },
             {
                 "command": "VMS.debugProject",
-                "title": "Debug on VMS"
+                "title": "Debug on VMS",
+                "category": "OpenVMS"
+            },
+            {
+                "command": "VMS.enumAllFiles",
+                "title": "Enumerate all files in all workspaces",
+                "category": "OpenVMS"
             }
         ],
         "configuration" : {

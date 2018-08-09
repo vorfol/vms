@@ -1,29 +1,28 @@
-import { inspect } from 'util';
 
 import {ToOutputChannel} from './output-channel';
 import {CreateSSHClient} from './create-ssh-client';
-import {ExecCommand} from './exec-command';
+import {ExecSSHCommand} from './exec-ssh-command';
 
 //process DEBUG command
 export async function RunDebugCommand() {
     try {
         let sshClient = await CreateSSHClient();
+        let sshResult = await ExecSSHCommand(sshClient, `debug`);
 
-        //Run debug command
-        //TODO: use settings
-        let sshResult = await ExecCommand(sshClient, `debug`);
-
-        //Show output to user
         ToOutputChannel(sshResult.stdout);
         if (sshResult.stderr) {
             ToOutputChannel(sshResult.stderr);
         }
 
-        //Close connection
         sshClient.end();
     }
     catch(error) {
-        ToOutputChannel(inspect(error));
+        if (error instanceof Error) {
+            ToOutputChannel(error.message);
+        }
+        else {
+            console.log(error);
+        }
     }
 }
 
