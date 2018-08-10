@@ -17,6 +17,14 @@
     ],
     "main": "./out/extension",
     "contributes": {
+        "menus": {
+            "commandPalette": [
+                {
+                    "command": "VMS.enumAllFiles",
+                    "when": "config.open-vms.enable-test"
+                }
+            ]
+        },
         "commands": [
             {
                 "command": "VMS.buildProject",
@@ -37,6 +45,11 @@
         "configuration" : {
             "title": "OpenVMS settings",
             "properties": {
+                "open-vms.enable-test" : {
+                    "type" : "boolean",
+                    "default": false,
+                    "description": "Enable test findFiles()"
+                },
                 "open-vms.host" : {
                     "type" : "string",
                     "default" : "localhost",
@@ -44,18 +57,18 @@
                 },
                 "open-vms.port" : {
                     "type" : "number",
-                    "default" : "22",
+                    "default" : 22,
                     "description": "OpenVMS ssh port"
                 },
                 "open-vms.username" : {
                     "type" : "string",
                     "default" : "foo",
-                    "description": "Username, ...only for test, should be removed!"
+                    "description": "Username"
                 },
                 "open-vms.password" : {
                     "type" : "string",
                     "default" : "bar",
-                    "description": "Username, ...only for test, should be removed!"
+                    "description": "Password"
                 },
                 "open-vms.filter" : {
                     "type" : "string",
