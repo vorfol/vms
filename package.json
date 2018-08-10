@@ -2,7 +2,7 @@
     "name": "vms",
     "displayName": "VMS",
     "description": "",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "publisher": "vorfol",
     "engines": {
         "vscode": "^1.25.0"
@@ -42,37 +42,37 @@
                 "category": "OpenVMS"
             }
         ],
-        "configuration" : {
+        "configuration": {
             "title": "OpenVMS settings",
             "properties": {
-                "open-vms.enable-test" : {
-                    "type" : "boolean",
+                "open-vms.enable-test": {
+                    "type": "boolean",
                     "default": false,
                     "description": "Enable test findFiles()"
                 },
-                "open-vms.host" : {
-                    "type" : "string",
-                    "default" : "localhost",
+                "open-vms.host": {
+                    "type": "string",
+                    "default": "localhost",
                     "description": "OpenVMS host to build, run and debug current workspace"
                 },
-                "open-vms.port" : {
-                    "type" : "number",
-                    "default" : 22,
+                "open-vms.port": {
+                    "type": "number",
+                    "default": 22,
                     "description": "OpenVMS ssh port"
                 },
-                "open-vms.username" : {
-                    "type" : "string",
-                    "default" : "foo",
+                "open-vms.username": {
+                    "type": "string",
+                    "default": "foo",
                     "description": "Username"
                 },
-                "open-vms.password" : {
-                    "type" : "string",
-                    "default" : "bar",
+                "open-vms.password": {
+                    "type": "string",
+                    "default": "bar",
                     "description": "Password"
                 },
-                "open-vms.filter" : {
-                    "type" : "string",
-                    "default" : "**/*.{c,cpp,h}",
+                "open-vms.filter": {
+                    "type": "string",
+                    "default": "**/*.{c,cpp,h}",
                     "description": "Files to send to OpenVMS"
                 }
             }
@@ -82,18 +82,17 @@
         "vscode:prepublish": "npm run compile",
         "compile": "tsc -p ./",
         "watch": "tsc -watch -p ./",
-        "postinstall": "node ./node_modules/vscode/bin/install",
-        "test": "npm run compile && node ./node_modules/vscode/bin/test"
+        "postinstall": "node ./node_modules/vscode/bin/install"
     },
     "devDependencies": {
-        "@types/mocha": "^2.2.42",
         "@types/node": "^7.0.43",
         "ssh2": "^0.6.1",
-        "tslint": "^5.8.0",
-        "typescript": "^2.6.1",
+        "typescript": "^2.9.2",
         "vscode": "^1.1.18"
     },
     "dependencies": {
-        "@types/ssh2": "^0.5.35"
-    }
+        "@types/ssh2": "^0.5.35",
+        "ssh2": "^0.6.1"
+    },
+    "enableProposedAPI": true
 }
