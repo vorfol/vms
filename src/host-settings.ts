@@ -37,13 +37,13 @@ export class SSHSettings {
      * Test password is non-empty.
      *
      * The returned value will be `true` if the password is entered and it is not empty. Otherwise the
-     * returned value will be `false`.
+     * returned value will be `false`. No reject() calls, always resolve().
      *
      */
     public async EnsurePassword() : Promise<boolean> {
         if (!this.password) {
             let prompt = `Enter password for ${this.username?this.username+'@':''}${this.host}:${this.port}`;
-            return new Promise((resolve : (result:boolean) => any, reject) => {
+            return new Promise((resolve : (result:boolean) => void, reject) => {
                 window.showInputBox( { password: true, prompt })
                 .then((value) => {
                     if (value) {

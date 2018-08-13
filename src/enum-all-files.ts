@@ -5,7 +5,7 @@ import {ToOutputChannel} from './output-channel';
 /** Enumerate all files in all workspaces. For test only.
 */
 export async function EnumAllFiles() {
-    // //workspace.registerFileSearchProvider
+    // 
     // if (workspace.workspaceFolders) {
     //     workspace.workspaceFolders.forEach((folder) => {
     //         //BUG: findFiles ignores sheme
