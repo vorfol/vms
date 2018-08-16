@@ -85,9 +85,11 @@
         "postinstall": "node ./node_modules/vscode/bin/install"
     },
     "devDependencies": {
-        "@types/node": "^7.0.43",
+        "@types/node": "^8.x.x",
+        "fs": "0.0.1-security",
         "ssh2": "^0.6.1",
         "typescript": "^2.9.2",
+        "util": "^0.11.0",
         "vscode": "^1.1.18"
     },
     "dependencies": {
