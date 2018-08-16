@@ -2,12 +2,12 @@ import * as fs from 'fs';
 import * as util from 'util';
 import {workspace, Uri} from 'vscode';
 import {SFTPWrapper} from 'ssh2';
-import {Stats} from 'ssh2-streams';
+import {Stats, InputAttributes} from 'ssh2-streams';
 
 import {ToOutputChannel} from './output-channel';
 
 const localStatFn = util.promisify(fs.stat);
-const mTimeTreshold = 100;
+const mTimeTreshold = 2;    //two seconds
 /**
  * Send file using SFTP client
  * 
@@ -21,19 +21,21 @@ export function SendFile(sftp : SFTPWrapper, file : Uri ) : Promise<boolean> {
         //TODO: do read from VFS and open-write-close sftp. Now only local FS is supported
         try {
             let localStat = await localStatFn(file.fsPath);
-            let sftpStat = await new Promise<Stats>((resolveStat, rejectStat) => {
+            let sftpStat = await new Promise<Stats | undefined>((resolveStat, rejectStat) => {
                 sftp.stat(relativeFile, (err, stats) => {
                     if (err) {
-                        rejectStat(err);    //INNER PROMISE: will be cought in catch below
+                        resolveStat(undefined); //ok, if no file - it will be created
                     }
                     else {
-                        resolveStat(stats); //INNER PROMISE: returned to sftpStaf
+                        resolveStat(stats);
                     }
                 })
             });
-            if (localStat.size === sftpStat.size &&
-                Math.abs(localStat.mtimeMs - sftpStat.mtime) < mTimeTreshold )  //besause mtimeMs is too big to be integer
+            if (sftpStat &&
+                localStat.size === sftpStat.size &&
+                Math.abs(localStat.mtimeMs/1000 - sftpStat.mtime) < mTimeTreshold )  //besause mtimeMs is too big to be integer, and sftpStat.mtime in seconds!
             {
+                ToOutputChannel(`File: ${relativeFile} has not been altered`);
                 resolve(false); //file not sent, but not reject this operation
             }   
             else {
@@ -42,8 +44,20 @@ export function SendFile(sftp : SFTPWrapper, file : Uri ) : Promise<boolean> {
                         reject(error);  //error while sending file, reject operation
                     }
                     else {
-                        //TODO: call sftp.SETSTAT, align mTime
-                        resolve(true);  //file sent successfully
+                        //Call sftp.SETSTAT, setting size and mTimeMs will be enough
+                        let attrs :InputAttributes  = {
+                            size: localStat.size,
+                            mtime: localStat.mtime, //as Date
+                            atime: localStat.atime  //as Date
+                        };
+                        sftp.setstat(relativeFile, attrs, (err) => {
+                            if (err) {
+                                reject(err);
+                            } else {
+                                ToOutputChannel(`File: ${relativeFile} has been sent`);
+                                resolve(true);  //file sent successfully        
+                            }
+                        });
                     }
                 });
             }
