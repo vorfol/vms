@@ -29,7 +29,7 @@ export function CreateSSHClient()  {
             return;
         }
         //Get password from cache
-        sshSettings.password = _passwordCache.get(_toCacheString(sshSettings)) || '';
+        sshSettings.password = sshSettings.password || _passwordCache.get(_toCacheString(sshSettings)) || '';
         //Allow user to setup password, if it doesn't exist
         if (!await sshSettings.EnsurePassword()) {
             reject(new Error(_messagePasswordIsEmpty));
