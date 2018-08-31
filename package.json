@@ -13,7 +13,9 @@
     "activationEvents": [
         "onCommand:VMS.buildProject",
         "onCommand:VMS.enumAllFiles",
-        "onCommand:VMS.debugProject"
+        "onCommand:VMS.debugProject",
+        "onCommand:VMS.createProject",
+        "workspaceContains:/.vscode/openvms-config.json"
     ],
     "main": "./out/extension",
     "contributes": {
@@ -39,6 +41,11 @@
             {
                 "command": "VMS.enumAllFiles",
                 "title": "Enumerate all files in all workspaces",
+                "category": "OpenVMS"
+            },
+            {
+                "command": "VMS.createProject",
+                "title": "Create OpenVMS project",
                 "category": "OpenVMS"
             }
         ],

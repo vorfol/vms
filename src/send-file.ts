@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import * as path from 'path';
 import * as util from 'util';
 import {workspace, Uri} from 'vscode';
 import {SFTPWrapper} from 'ssh2';
@@ -42,10 +43,41 @@ export function SendFile(sftp : SFTPWrapper, file : Uri ) : Promise<boolean> {
                 //TODO: verbose? silent?
                 ToOutputChannel(`File: ${relativeFile} has not been altered`);
                 resolve(false); //file not sent, but not reject this operation
-            }   
-            else {
-                //send
-                sftp.fastPut(file.fsPath, relativeFile, (error: Error) => {
+            } else {
+                //
+                let dir = path.dirname(relativeFile);
+                let basefile = path.basename(relativeFile);
+
+                if (dir === '.') {
+                    dir = '';
+                } else {
+                    //translate to VMS path - TODO: form settings?
+                    dir = '[.' + dir.replace('\\', '.')+']';
+
+                    let dir_exists = await new Promise<boolean>((resolve, reject) => {
+                        sftp.stat( dir, (error: any, stats: Stats) => {
+                            if (error) {
+                                resolve(false);
+                            } else {
+                                resolve(true);
+                            }
+                        });
+                    });
+            
+                    if (!dir_exists) {
+                        //let res = 
+                        await new Promise<boolean>((resolve, reject) => {
+                            sftp.mkdir( dir, (error: any) => {
+                                if (error) {
+                                    resolve(false);
+                                } else {
+                                    resolve(true);
+                                }
+                            });
+                        });
+                    }
+                }        
+                sftp.fastPut(file.fsPath, dir + basefile, (error: Error) => {
                     if (error) {
                         reject(error);  //error while sending file, reject operation
                     }
@@ -53,10 +85,10 @@ export function SendFile(sftp : SFTPWrapper, file : Uri ) : Promise<boolean> {
                         //set size and time
                         let attrs :InputAttributes  = {
                             size: localStat.size,
-                            mtime: localStat.mtime, //as Date
-                            atime: localStat.atime  //as Date
+                            mtime: localStat.mtimeMs/1000,
+                            atime: localStat.atimeMs/1000
                         };
-                        sftp.setstat(relativeFile, attrs, (err) => {
+                        sftp.setstat(dir + basefile, attrs, (err) => {
                             if (err) {
                                 reject(err);
                             } else {

@@ -6,7 +6,7 @@ import {SendFile} from './send-file';
 import {ExecSSHCommand} from './exec-ssh-command';
 import {FilesToSend} from './files-to-send';
 
-let _commandBuilAll = `build all`;
+let _commandBuilAll = `show time`;
 
 /** Process BUILD command
  * 
@@ -26,6 +26,7 @@ export async function RunBuildCommand() {
         }
         sftp.end();
 
+        //NOTE: sshClient.exec will close connection
         let sshResult = await ExecSSHCommand(sshClient, _commandBuilAll);
 
         ToOutputChannel(sshResult.stdout);

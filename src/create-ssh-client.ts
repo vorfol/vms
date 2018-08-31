@@ -45,6 +45,16 @@ export function CreateSSHClient()  {
                 _passwordCache.delete(_toCacheString(sshSettings));
                 reject(error);
             })
+            .on('end', () => {
+                console.log("Client ends");
+            })
+            .on('close', (hadError) => {
+                if (hadError) {
+                    console.log(`Client closed with error`);
+                } else {
+                    console.log(`Client closed`);
+                }
+            })
             .connect(sshSettings);
     });
 }
