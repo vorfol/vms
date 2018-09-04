@@ -82,7 +82,7 @@ export function SendFile(sftp : SFTPWrapper, file : Uri ) : Promise<boolean> {
                         reject(error);  //error while sending file, reject operation
                     }
                     else {
-                        //set size and time
+                        //set size and time - doesn't work on OpenVMS!
                         let attrs :InputAttributes  = {
                             size: localStat.size,
                             mtime: localStat.mtimeMs/1000,

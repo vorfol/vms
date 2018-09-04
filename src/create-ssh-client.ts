@@ -35,27 +35,32 @@ export function CreateSSHClient()  {
             reject(new Error(_messagePasswordIsEmpty));
             return;
         }
+        //OnReady
         client.on('ready', () => {
                 //Put password to cache
                 _passwordCache.set(_toCacheString(sshSettings), sshSettings.password);
                 resolve(client);
-            })
-            .on('error', (error) => {
-                //Remove passowrd from cache
-                _passwordCache.delete(_toCacheString(sshSettings));
+            });
+        //OnError
+        client.on('error', (error) => {
                 reject(error);
-            })
-            .on('end', () => {
+            });
+        //OnEnd
+        client.on('end', () => {
                 console.log("Client ends");
-            })
-            .on('close', (hadError) => {
+            });
+        //OnClose
+        client.on('close', (hadError) => {
                 if (hadError) {
                     console.log(`Client closed with error`);
                 } else {
                     console.log(`Client closed`);
                 }
-            })
-            .connect(sshSettings);
+            });
+        //Remove password before try to connect
+        _passwordCache.delete(_toCacheString(sshSettings));
+        //client.connect(Object.assign({debug: console.log}, sshSettings));
+        client.connect( sshSettings );
     });
 }
 
