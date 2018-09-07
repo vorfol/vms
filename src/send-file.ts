@@ -9,6 +9,13 @@ import {ToOutputChannel} from './output-channel';
 
 const localStatFn = util.promisify(fs.stat);
 const mTimeTreshold = 2;    //two seconds
+
+// function Delay(ms : number) : Thenable<boolean> {
+//     return new Promise((resolve, reject) => {
+//         setTimeout(() => resolve(true), ms);
+//     });
+// }
+
 /**
  * Send file using SFTP client
  * 
@@ -38,7 +45,7 @@ export function SendFile(sftp : SFTPWrapper, file : Uri ) : Promise<boolean> {
             //do not send if size and modification time are the same
             if (sftpStat &&
                 localStat.size === sftpStat.size &&
-                Math.abs(localStat.mtimeMs/1000 - sftpStat.mtime) < mTimeTreshold )  //sftpStat.mtime in seconds!
+                Math.abs(localStat.atimeMs/1000 - sftpStat.atime) < mTimeTreshold )  //sftpStat.mtime in seconds!
             {
                 //TODO: verbose? silent?
                 ToOutputChannel(`File: ${relativeFile} has not been altered`);
@@ -77,14 +84,13 @@ export function SendFile(sftp : SFTPWrapper, file : Uri ) : Promise<boolean> {
                         });
                     }
                 }        
-                sftp.fastPut(file.fsPath, dir + basefile, (error: Error) => {
+                sftp.fastPut(file.fsPath, dir + basefile, async (error: Error) => {
                     if (error) {
                         reject(error);  //error while sending file, reject operation
                     }
                     else {
                         //set size and time - doesn't work on OpenVMS!
                         let attrs :InputAttributes  = {
-                            size: localStat.size,
                             mtime: localStat.mtimeMs/1000,
                             atime: localStat.atimeMs/1000
                         };

@@ -1,37 +1,52 @@
 'use strict';
-import {commands, ExtensionContext} from 'vscode';
+import {commands} from 'vscode';
+import {ExtensionContext} from 'vscode';
  
 import {RunBuildCommand} from './run-build-command';
-import {RunDebugCommand} from './run-debug-command';
-import {EnumAllFiles} from './enum-all-files';
-import {VSC_Configuration} from './open-vms-config';
+//import {RunDebugCommand} from './run-debug-command';
+//import {EnumAllFiles} from './enum-all-files';
+import {ConfigProvider} from './open-vms-config';
+import {ConfigSerializer} from './open-vms-config';
+import {VSC_ConfigSerializer} from './open-vms-config';
+import { window } from 'vscode';
+
+//import {workspace} from 'vscode';
+//import {FS_ConfigSerializer} from './open-vms-config';
+//import * as path from 'path';
 
 export function activate(context: ExtensionContext) {
 
-    context.subscriptions.push( commands.registerCommand('VMS.buildProject', () => {
+    context.subscriptions.push( commands.registerCommand('VMS.buildProject', async () => {
         RunBuildCommand();
     }));
 
-    context.subscriptions.push( commands.registerCommand('VMS.debugProject', () => {
-        RunDebugCommand();
+    context.subscriptions.push( commands.registerCommand('VMS.editProject', async () => {
+
+        let serializer : ConfigSerializer = new VSC_ConfigSerializer();
+        /** Just for test */
+        // if (workspace.rootPath) {
+        //     //let's some hardcode :)
+        //     let cfg_path = path.join(workspace.rootPath, '.vscode/openvms-config.json');
+        //     serializer = new FS_ConfigSerializer(cfg_path);
+        // }
+
+        window.showTextDocument(serializer.Uri()).then((text_editor) => {
+            //OK
+        }, async (reason) => {
+            //Not OK - create default settings
+            let cfg_provider = new ConfigProvider(serializer);
+            cfg_provider.Defaults();
+            await cfg_provider.Save();
+            //try #2
+            window.showTextDocument(serializer.Uri()).then((text_editor) => {
+                //OK
+            }, (error) => {
+                //FAIL
+                console.log(`Edit project settings failed`);
+            });
+        });
+        
     }));
-
-    context.subscriptions.push( commands.registerCommand('VMS.enumAllFiles', () => {
-        EnumAllFiles();
-    }));
-
-    context.subscriptions.push( commands.registerCommand('VMS.createProject', async () => {
-        let oc = new VSC_Configuration();
-        //let loaded = 
-        await oc.Load();
-        //console.log(loaded);
-        oc.user = "anonymous";
-        //let saved = 
-        await oc.Save();
-        //console.log(saved);
-    }));
-
-
 }
 
 // this method is called when your extension is deactivated

@@ -2,8 +2,8 @@
     "name": "vms",
     "displayName": "VMS",
     "description": "",
-    "version": "0.0.2",
-    "publisher": "vorfol",
+    "version": "0.0.3",
+    "publisher": "AppliedTech",
     "engines": {
         "vscode": "^1.26.0"
     },
@@ -11,22 +11,12 @@
         "Other"
     ],
     "activationEvents": [
+        "onCommand:VMS.editProject",
         "onCommand:VMS.buildProject",
-        "onCommand:VMS.enumAllFiles",
-        "onCommand:VMS.debugProject",
-        "onCommand:VMS.createProject",
         "workspaceContains:/.vscode/openvms-config.json"
     ],
     "main": "./out/extension",
     "contributes": {
-        "menus": {
-            "commandPalette": [
-                {
-                    "command": "VMS.enumAllFiles",
-                    "when": "config.open-vms.enable-test"
-                }
-            ]
-        },
         "commands": [
             {
                 "command": "VMS.buildProject",
@@ -34,56 +24,11 @@
                 "category": "OpenVMS"
             },
             {
-                "command": "VMS.debugProject",
-                "title": "Debug on VMS",
-                "category": "OpenVMS"
-            },
-            {
-                "command": "VMS.enumAllFiles",
-                "title": "Enumerate all files in all workspaces",
-                "category": "OpenVMS"
-            },
-            {
-                "command": "VMS.createProject",
-                "title": "Create OpenVMS project",
+                "command": "VMS.editProject",
+                "title": "Edit OpenVMS project settings",
                 "category": "OpenVMS"
             }
-        ],
-        "configuration": {
-            "title": "OpenVMS settings",
-            "properties": {
-                "open-vms.enable-test": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Enable test findFiles()"
-                },
-                "open-vms.host": {
-                    "type": "string",
-                    "default": "localhost",
-                    "description": "OpenVMS host to build, run and debug current workspace"
-                },
-                "open-vms.port": {
-                    "type": "number",
-                    "default": 22,
-                    "description": "OpenVMS ssh port"
-                },
-                "open-vms.username": {
-                    "type": "string",
-                    "default": "foo",
-                    "description": "Username"
-                },
-                "open-vms.password": {
-                    "type": "string",
-                    "default": "bar",
-                    "description": "Password"
-                },
-                "open-vms.filter": {
-                    "type": "string",
-                    "default": "**/*.{c,cpp,h}",
-                    "description": "Files to send to OpenVMS"
-                }
-            }
-        }
+        ]
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",

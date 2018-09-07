@@ -1,7 +1,7 @@
 
-import {workspace, Uri, WorkspaceEdit, Position} from 'vscode';
-//import { inspect } from 'util';
-import { Range } from 'vscode';
+import { Range, workspace, Uri, WorkspaceEdit, Position} from 'vscode';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export type ConnectMethod = 'user_password' | 'keys';
 
@@ -9,78 +9,164 @@ export interface HostConfig {
     method: string;
     host: string;
     port?: number;
-    user?: string;
+    username?: string;
     password?: string;
 }
 
-export abstract class Configuration implements HostConfig{
-
-    method = 'user_password';
-    host = 'host';
-    port : number | undefined = 22;
-    user : string | undefined = 'user';
-    password : string | undefined ='';
-
-    get host_config() : HostConfig {
-        return { 
-            method: this.method, 
-            host: this.host,
-            port: this.port,
-            user: this.user,
-            password: this.password
-        };
-    }
-
-    set host_config(cfg : HostConfig) {
-        this.method = cfg.method;
-        this.host = cfg.host;
-        this.port = cfg.port;
-        this.user = cfg.user;
-        this.password = cfg.password;
-    }
-    
-    abstract Load() : Thenable<Configuration | undefined>;
-    abstract Save() : Thenable<boolean>;
+export class UserPasswordHostConfig implements HostConfig {
+    method: string = 'user_password';    
+    host: string = '';
+    port: number = 22;
+    username: string  = '';
+    password: string = '';
 }
 
-export class VSC_Configuration extends Configuration {
+export interface ConfigSerializer {
+    Load() : Thenable<any>;
+    Save(obj: any) : Thenable<boolean>;
+    Uri() : Uri;
+}
 
-    get configPath () : Uri | undefined {
-        if (workspace.workspaceFolders && workspace.workspaceFolders.length) {
-            let cfgUri = workspace.workspaceFolders[0].uri;
-            if (workspace.workspaceFolders.length > 1)
-            {
-                let last_folder_uri = workspace.workspaceFolders[workspace.workspaceFolders.length-1].uri;
-                let path = last_folder_uri.path;
-                if (path && path.length && path[path.length-1] == '/') {
-                    path = path.slice(0, path.length-1);
-                } 
-            }
-            let path = cfgUri.path;
-            let new_path = '.vscode/openvms-config.json'
-            if (path && path.length && path[path.length-1] == '/') {
-                new_path = path + new_path;
-            } else {
-                new_path = path + '/' + new_path;
-            }
-            let new_cfgUri = cfgUri.with({ path: new_path });
-            return new_cfgUri;
-        }
-        return undefined;
+export class ConfigProvider {
+
+    protected _loaded = false;
+
+    constructor(protected _cfg_serializer: ConfigSerializer) {
     }
 
-    Load(): Thenable<Configuration | undefined> {
-        let path_or_null = this.configPath;
-        if (!path_or_null) {
+    /** Hold configurations as ANY
+     */
+    protected _config_holder : any = {};
+
+    get host_configuration() : HostConfig {
+        //create default
+        let ret : HostConfig = new UserPasswordHostConfig();
+        //test if cfg exist in holder
+        let cfg = this._config_holder['HostConfig'];
+        if (cfg) {
+            //update known properties only
+            ret.method = cfg.method || ret.method;
+            ret.host = cfg.host || ret.host;
+            ret.port = cfg.port || ret.port;
+            ret.username = cfg.username || ret.username;
+            ret.password = cfg.password || ret.password;
+        }
+        return ret;
+    }
+
+    set host_configuration(cfg : HostConfig) {
+        this._config_holder['HostConfig'] = cfg;
+    }
+
+    Defaults() : boolean {
+        this.host_configuration = new UserPasswordHostConfig();
+        return true;
+    }
+
+    Load() : Thenable<boolean> {
+        this._config_holder = {};
+        this._loaded = false;
+        return new Promise<boolean>( async (resolve, _reject) => {
+            let loaded = await this._cfg_serializer.Load();
+            if (loaded) {
+                this._config_holder = loaded;
+                this._loaded = true;
+                resolve(true);
+            } else {
+                resolve(false);
+            }
+        });
+    }    
+
+    Save() : Thenable<boolean> {
+        return this._cfg_serializer.Save(this._config_holder);
+    }    
+
+    GetConfigurationUri() : Uri {
+        return this._cfg_serializer.Uri();
+    }
+}
+
+/** Serializer based on file system provided Save/Load */
+export class FS_ConfigSerializer implements ConfigSerializer {
+
+    constructor(protected readonly _file_name : string) {
+
+    }
+
+    Uri(): Uri {
+        return Uri.file(this._file_name);
+    }
+
+    Load(): Thenable<any> {
+        return new Promise<any>((resolve, _reject) => {
+            fs.readFile(this._file_name, (err, data) =>{
+                if (err) {
+                    resolve(undefined);
+                } else {
+                    try {
+                        let str = data.toString('utf8');
+                        let obj = JSON.parse(str);
+                        resolve(obj);
+                    } catch(err) {
+                        resolve(undefined);
+                    }
+                }
+            });
+        })
+    }    
+
+    Save(obj: any): Thenable<boolean> {
+        if (obj) {
+            return new Promise<boolean>((resolve, _reject) => {
+                //do save obj
+                fs.writeFile(this._file_name, JSON.stringify(obj, null, 4), (err) => {
+                    if (err) {
+                        resolve(false);
+                    } else {
+                        resolve(true);
+                    }
+                })
+            });
+        }
+        return Promise.resolve(false);
+    }
+}
+
+/** Configuration based on Visual Studio Code provided Save/Load */
+export class VSC_ConfigSerializer implements ConfigSerializer {
+
+    protected readonly _folders : string[] = ['.vscode'];
+    protected readonly _file_name = 'openvms-config';
+    protected readonly _file_ext = '.json';
+
+    Uri(): Uri {
+        if (workspace.workspaceFolders && workspace.workspaceFolders.length) {
+            let ws_Uri = workspace.workspaceFolders[0].uri;
+            let ws_path = ws_Uri.fsPath;
+            let format : path.FormatInputPathObject = {
+                dir: path.join(ws_path, ...this._folders),
+                name: this._file_name,
+                ext: this._file_ext
+            };
+            let file_path = path.format(format);
+            let file_Uri = ws_Uri.with({ path: file_path });
+            return file_Uri;
+        }
+        return Uri.parse('untitled:openvms-config.json');
+    }
+
+    Load(): Thenable<any> {
+        let _uri = this.Uri();
+        if (_uri.scheme === 'untitled') {
             return Promise.resolve(undefined);
         } else {
-            let path_ok = path_or_null;
-            return new Promise<Configuration|undefined>( async (resolve, reject) => {
+            return new Promise<any>( async (resolve, reject) => {
                 try {
-                    let text_doc = await workspace.openTextDocument(path_ok);
+                    let text_doc = await workspace.openTextDocument(_uri);
                     let all_text = text_doc.getText();
-                    this.host_config = JSON.parse(all_text);
-                    resolve(this);
+                    let obj = JSON.parse(all_text);
+                    resolve(obj);
                 } catch(err) {
                     resolve(undefined);
                 }
@@ -88,31 +174,31 @@ export class VSC_Configuration extends Configuration {
         }
     }    
 
-    Save(): Thenable<boolean> {
-        let path_or_null = this.configPath;
-        if (!path_or_null) {
+    Save(obj: any): Thenable<boolean> {
+        let _uri = this.Uri();
+        if (_uri.scheme === 'untitled' || !obj) {
             return Promise.resolve(false);
         } else {
-            let path_ok = path_or_null;
             return new Promise<boolean>( async (resolve, reject) => {
                 try {
                     let range : Range | undefined = undefined;
                     try {
-                        let text_doc = await workspace.openTextDocument(path_ok);
+                        let text_doc = await workspace.openTextDocument(_uri);
                         range = text_doc.validateRange(new Range(0,0,32767,32767));
                     } catch (err) {
                         range = undefined;
                     }
                     let we = new WorkspaceEdit();
+                    let str = JSON.stringify(obj, null, 4);
                     if (!range) {
-                        we.createFile(path_ok);
-                        we.insert(path_ok, new Position(0, 0), JSON.stringify(this.host_config, null, 4));
+                        we.createFile(_uri);
+                        we.insert(_uri, new Position(0, 0), str);
                     } else {
-                        we.replace(path_ok, range, JSON.stringify(this.host_config, null, 4));
+                        we.replace(_uri, range, str);
                     }
                     let status = await workspace.applyEdit(we);
                     if (status) {
-                        let text_doc = await workspace.openTextDocument(path_ok);
+                        let text_doc = await workspace.openTextDocument(_uri);
                         let saved = await text_doc.save();
                         resolve(saved);
                     } else {

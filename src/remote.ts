@@ -1,12 +1,4 @@
 
-/** File stats for synchronization
- * 
- */
-export interface SyncStats {
-
-    IsEqual(stats: SyncStats) : boolean;
-}
-
 /** File in project
  * 
  */
@@ -22,46 +14,61 @@ export interface Handle {
 
 }
 
+export interface FileStatus {
+
+    size?: number;
+    acc_time?: number;
+    mod_time?: number;
+    crc32?: number;
+}
+
 /** Remote system
  * 
  */
 export interface RemoteSystem {
-    /** Retrieve file information for synchronization
-     *  @file file in project/workspace
-     *  @returns SyncStats
+
+    /** Open file
+     * @file file to open
+     * @mode "r", "w"
+     * @returns handle to opened file
      */
-    FileStats(file : ProjectFile) : Thenable<SyncStats>;
+    OpenFile(file : ProjectFile, mode: string) : Thenable<Handle>;
 
-    /** Put file to remote system
-     *  @file file in project/workspace
-     *  @returns true if file sent, otherwise false
-     */
-    PutFile(file : ProjectFile) : Thenable<boolean>;
-
-    OpenFile(file : ProjectFile) : Thenable<Handle>;
-
+    /** Close file
+     * 
+    */
     CloseFile(handle : Handle) : Thenable<boolean>;
 
-    
+    /** Read file
+     * @handle handle to previously opened file
+     * @bytes bytes to read
+     * @returns buffer (full file content)
+     */
+    ReadFile(handle: Handle, bytes: number) : Thenable<Buffer>;
+
+    /** Write to file
+     * @handle handle to previously opened file
+     * @buffer buffer to write
+     * @returns read bytes
+     */
+    WriteFile(handle: Handle, buffer: Buffer) : Thenable<number>;
+
+    /** Seek in file
+     * @pos new position
+     * @returns current position after SeekFile
+     */
+    SeekFile(handle: Handle, pos: number) : Thenable<number>;
+
+    /** Get file stats
+     * @file 
+     * @status stats to fill
+     * @returns filled stats
+     */
+    FileStatus(file: ProjectFile, status: FileStatus) : Thenable<FileStatus>;
+
+    /** Enumerate all project files
+     * @options include, exclude etc.
+     * @returns iterator
+     */
+    EnumFiles(options?: any) : Iterator<ProjectFile>;
 }
-
-/** Implementation
- * 
- */
-export class SizeChSum implements SyncStats {
-    
-    constructor(protected size : number, protected checksum : number) {
-
-    }
-
-    IsEqual(stats: SyncStats): boolean {
-        if (stats instanceof SizeChSum) {
-            let is_eq = (stats.size === this.size) && (stats.checksum === this.checksum);
-            return is_eq;
-        }
-        //throw new Error("Not a SizeChSum.");
-        return false;
-    }
-
-}
-
