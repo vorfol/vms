@@ -2,12 +2,21 @@ import { Editor, Serializer, SerializeHelper } from "./config";
 import { commands } from "vscode";
 import { Uri } from 'vscode';
 import { workspace } from "vscode";
+import { Disposable } from "vscode";
+import { Event } from "vscode";
+import { WaitFireEmitter } from "../wait-fire-emitter";
+//import { EventEmitter } from "vscode";
 
 export class WS_SerializeHelper implements SerializeHelper {
 
-    _serializer: Serializer = new WS_Serializer('open-vms');
+    _serializer: Serializer;
 
-    _editor: Editor = new WS_Editor();
+    _editor: Editor;
+
+    constructor(section: string) {
+        this._serializer = new WS_Serializer(section);
+        this._editor = new WS_Editor();
+    }
 
     getSerializer(): Serializer {
         return this._serializer;
@@ -17,9 +26,19 @@ export class WS_SerializeHelper implements SerializeHelper {
         return this._editor;
     }
 
+    dispose(): void {
+        this._serializer.dispose();
+        //this._editor.dispose(); TODO?
+        console.log(`WS_SerializeHelper disposed`);
+    } 
+
 }
 
 export class WS_Editor implements Editor {
+    
+    dispose(): void {
+        console.log(`WS_Editor disposed`);
+    }
 
     invoke(uri: Uri): Thenable<boolean> {
         if (uri.scheme === 'vscode-command') {
@@ -39,20 +58,57 @@ export class WS_Editor implements Editor {
 }
 
 export class WS_Serializer implements Serializer {
+
+    private _emitter = new WaitFireEmitter<null>(1000);
+    //private _emitter = new EventEmitter<null>(); //fire immediate
+
+    onDidChangeOutside: Event<null> = this._emitter.event;
+
+    private _dispose: Disposable[] = [];
+
+    dispose(): void {
+        if (this._dispose) {
+            for(let disp of this._dispose) {
+                disp.dispose();
+            }
+        }
+        this._dispose = [];
+        console.log(`WS_Serializer disposed`);
+    }
     
     private readonly _command = 'workbench.action.openWorkspaceSettings';
 
     constructor(private _section: string) {
-
+        this._dispose.push( this._emitter );
+        this._dispose.push( workspace.onDidChangeConfiguration((e) => {
+            if (e.affectsConfiguration(_section)) {
+                this._emitter.fire(null);
+            }
+        }));
     }
 
-    load(): Thenable<any> {
-        throw new Error("Method not implemented.");
+    load(obj: any): Thenable<any> {
+        return new Promise<any>(async (resolve, reject) => {
+            let configuration = workspace.getConfiguration(this._section);
+            let ret: any = {};
+            for(let section in obj) {
+                let sect_obj = obj[section];
+                let sect_ret: any = {};
+                for(let val_key in sect_obj ) {
+                    let sect_val = configuration.get(`${section}.${val_key}`);
+                    if (sect_val !== undefined) {
+                        sect_ret[val_key] = sect_val;
+                    }
+                }
+                ret[section] = sect_ret;
+            }
+            resolve(ret);
+        });
     }    
 
     save(obj: any): Thenable<boolean> {
-        let configuration = workspace.getConfiguration(this._section);
         return new Promise<boolean>(async (resolve, reject) => {
+            let configuration = workspace.getConfiguration(this._section);
             for(let section in obj) {
                 let sect_obj = obj[section];
                 for(let val_key in sect_obj ) {
@@ -67,6 +123,5 @@ export class WS_Serializer implements Serializer {
     getUri(): Uri {
         return Uri.parse('vscode-command:'+ this._command);
     }
-
 
 }

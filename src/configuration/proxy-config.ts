@@ -1,16 +1,32 @@
 import { Configuration, SerializeHelper } from "./config";
+import { Disposable } from "vscode";
 
 /** Configuration with proxy object
  * 
  */
 export class ProxyConfiguration implements Configuration {
+    
+    private _dispose: Disposable[] = [];
+    dispose() {
+        for(let disp of this._dispose) {
+            disp.dispose();
+        }
+        this._dispose = [];
+        console.log(`ProxyConfiguration disposed`);
+    }
 
-    _proxy: any;
-    _helper: SerializeHelper;
+    private _proxy: any;
+    private _helper: SerializeHelper;
+    private _loadCount: number = 0;
 
     constructor(helper: SerializeHelper) {
         this._helper = helper;
         this._proxy = {};
+
+        this._dispose.push( helper.getSerializer().onDidChangeOutside(() => {
+            console.log(`onDidChange make load ${++this._loadCount}`);
+            this.load();
+        }));
     }
 
     add(section: string, object: any): boolean {
@@ -39,12 +55,14 @@ export class ProxyConfiguration implements Configuration {
     load(): Thenable<boolean> {
         return new Promise<boolean>(async (resolve, reject) => {
             let serializer = this._helper.getSerializer();
-            serializer.load().then( (obj) => {
-                for(let section in obj) {
+            serializer.load(this._proxy).then( (loaded_obj) => {
+                for(let section in loaded_obj) {
                     if (this._proxy[section]) {
-                        let sect_obj = obj[section];
-                        for(let s_key in sect_obj) {
-                            this._proxy[section][s_key] = sect_obj[s_key];
+                        let sect_obj = loaded_obj[section];
+                        if (sect_obj) {
+                            for(let s_key in sect_obj) {
+                                this._proxy[section][s_key] = sect_obj[s_key];
+                            }
                         }
                     } else {
                         //no section in _proxy, TODO: add? or generate error?

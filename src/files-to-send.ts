@@ -1,17 +1,25 @@
 import {workspace} from 'vscode';
 
-//import {WorkspaceSettings} from './workspace-settings';
-import { ConfigProvider } from './open-vms-config';
+import { Configuration } from './configuration/config';
 
-//let _messageFilterNotFoud = `Please, update "filter" in workspace settings.`;
+export class Filter {
+
+    include: string = '';
+    exclude: string = '';
+}
+
+let _filter = new Filter();
 
 /** Get list of files to send using current workspace settings
  * 
  * @return A thenable that resolves to an array of resource identifiers.
  */
-export async function FilesToSend(cfg_provider: ConfigProvider) {
+export async function FilesToSend(config: Configuration) {
 
-    let filter = cfg_provider.filter_configuration.include;
-    let files = workspace.findFiles(filter);
+    if (!await config.get('filter')) {
+        config.add('filter', _filter);
+        await config.load();
+    }
+    let files = workspace.findFiles(_filter.include);
     return files;
 }

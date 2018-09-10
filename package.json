@@ -64,13 +64,14 @@
                     "default": "",
                     "description": "Password"
                 },
-                "open-vms.exclude": {
-                    "type": "array",
-                    "default": [ 
-                        "**/.vscode/**/*.*", 
-                        "**/node-modules/**/*.*",
-                        "**/our/**/*.*"
-                    ],
+                "open-vms.filter.include": {
+                    "type": "string",
+                    "default": "**/*.*", 
+                    "description": "Include files masks"
+                },
+                "open-vms.filter.exclude": {
+                    "type": "string",
+                    "default": "**/{.vscode,node-modules}/*.*", 
                     "description": "Exclude files masks"
                 }
             }

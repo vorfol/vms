@@ -1,21 +1,25 @@
 import { Uri } from "vscode";
+import { Event } from "vscode";
+import { Disposable } from "vscode";
 
 /** Serializer 
  * 
 */
-export interface Serializer {
+export interface Serializer extends Disposable {
     
-    load() : Thenable<any>;
+    load(obj: any) : Thenable<any>;
 
     save(obj: any) : Thenable<boolean>;
 
     getUri() : Uri;
+
+    readonly onDidChangeOutside: Event<null>;
 }
 
 /** Editor 
  * 
 */
-export interface Editor {
+export interface Editor extends Disposable {
     
     invoke(uri: Uri): Thenable<boolean>;
 }
@@ -23,7 +27,7 @@ export interface Editor {
 /** Serialize helper
  * 
  */
-export interface SerializeHelper {
+export interface SerializeHelper extends Disposable {
     
     getSerializer() : Serializer;
 
@@ -33,7 +37,7 @@ export interface SerializeHelper {
 /** Configuration
  * 
  */
-export interface Configuration {
+export interface Configuration extends Disposable {
     
     add(section: string, object: any) : boolean;
 
@@ -46,6 +50,5 @@ export interface Configuration {
     save() : Thenable<boolean>;
     
     edit() : Thenable<boolean>;
-    
 }
 
