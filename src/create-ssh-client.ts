@@ -22,6 +22,8 @@ export function CreateSSHClient(config: Configuration)  {
 
         let client = new Client();
 
+        let clear_pass: Function | undefined = undefined;
+
         //Allow user to setup password, if it doesn't exist
         let pass_check = new Promise<boolean>((resolve, reject) => {
             if (!_settings.password) {
@@ -30,6 +32,10 @@ export function CreateSSHClient(config: Configuration)  {
                 .then((value) => {
                     if (value) {
                         _settings.password = value;
+                        //clear password only if user entered it
+                        clear_pass = function() {
+                            _settings.password = '';
+                        };
                         resolve(true);
                     }
                     else {
@@ -49,12 +55,15 @@ export function CreateSSHClient(config: Configuration)  {
             reject(new Error(_messagePasswordIsEmpty));
             return;
         }
+        
         //OnReady
         client.on('ready', () => {
+                clear_pass = undefined;
                 resolve(client);
             });
         //OnError
         client.on('error', (error) => {
+                clear_pass && clear_pass();
                 reject(error);
             });
         //OnEnd
@@ -69,7 +78,6 @@ export function CreateSSHClient(config: Configuration)  {
                     console.log(`Client closed`);
                 }
             });
-        //Remove password before try to connect
         //client.connect(Object.assign({debug: console.log}, _settings));
         client.connect( _settings );
     });
