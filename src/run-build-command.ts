@@ -5,19 +5,20 @@ import {CreateSFTP} from './create-sftp';
 import {SendFile} from './send-file';
 import {ExecSSHCommand} from './exec-ssh-command';
 import {FilesToSend} from './files-to-send';
+import { ConfigProvider } from './open-vms-config';
 
 let _commandBuilAll = `show time`;
 
 /** Process BUILD command
  * 
  */
-export async function RunBuildCommand() {
+export async function RunBuildCommand(cfg_provider: ConfigProvider) {
     try {
 
         //get list before creating client to check 'filter' settings... ugly?
-        let files = await FilesToSend();
+        let files = await FilesToSend(cfg_provider);
 
-        let sshClient = await CreateSSHClient();
+        let sshClient = await CreateSSHClient(cfg_provider);
         let sftp = await CreateSFTP(sshClient);
         
         

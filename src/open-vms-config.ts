@@ -13,6 +13,10 @@ export interface HostConfig {
     password?: string;
 }
 
+export interface FilterConfig {
+    include: string;
+}
+
 export class UserPasswordHostConfig implements HostConfig {
     method: string = 'user_password';    
     host: string = '';
@@ -21,9 +25,16 @@ export class UserPasswordHostConfig implements HostConfig {
     password: string = '';
 }
 
+export class CPP_FilterConfig {
+    include: string = '**/*.{c,cpp,h}';
+}
+
 export interface ConfigSerializer {
+    
     Load() : Thenable<any>;
+
     Save(obj: any) : Thenable<boolean>;
+
     Uri() : Uri;
 }
 
@@ -57,6 +68,21 @@ export class ConfigProvider {
     set host_configuration(cfg : HostConfig) {
         this._config_holder['HostConfig'] = cfg;
     }
+    get filter_configuration() : FilterConfig {
+        //create default
+        let ret : FilterConfig = new CPP_FilterConfig();
+        //test if cfg exist in holder
+        let cfg = this._config_holder['FilterConfig'];
+        if (cfg) {
+            //update known properties only
+            ret.include = cfg.include || ret.include;
+        }
+        return ret;
+    }
+
+    set filter_configuration(cfg : FilterConfig) {
+        this._config_holder['FilterConfig'] = cfg;
+    }
 
     Defaults() : boolean {
         this.host_configuration = new UserPasswordHostConfig();
@@ -86,6 +112,42 @@ export class ConfigProvider {
         return this._cfg_serializer.Uri();
     }
 }
+
+/** Serializer based on VSCode workspace configuration */
+export class WS_ConfigSerializer implements ConfigSerializer {
+
+    private static readonly _openSettingsCommand = 'workbench.action.openWorkspaceSettings';
+    private static readonly _configurationSection = 'open-vms';
+
+    Load(): Thenable<any> {
+        let configuration = workspace.getConfiguration(WS_ConfigSerializer._configurationSection);
+        let ret = { 
+            HostConfig: {
+                method: 'user_password',
+                host: configuration.get<string>('host'),
+                port: configuration.get<number>('port'),
+                username: configuration.get<string>('username'),
+                password: configuration.get<string>('password')
+            }
+        };
+        return Promise.resolve(ret);
+    }    
+    Save(obj: any): Thenable<boolean> {
+        let configuration = workspace.getConfiguration(WS_ConfigSerializer._configurationSection);
+        return new Promise<boolean>(async (resolve, reject) => {
+            await configuration.update('host', obj.host);
+            await configuration.update('port', obj.port);
+            await configuration.update('username', obj.port);
+            //do not save password!
+            resolve(true);
+        });
+    }
+    Uri(): Uri {
+        return Uri.parse('vscode-command:'+ WS_ConfigSerializer._openSettingsCommand);
+    }
+
+}
+
 
 /** Serializer based on file system provided Save/Load */
 export class FS_ConfigSerializer implements ConfigSerializer {
@@ -153,7 +215,7 @@ export class VSC_ConfigSerializer implements ConfigSerializer {
             let file_Uri = ws_Uri.with({ path: file_path });
             return file_Uri;
         }
-        return Uri.parse('untitled:openvms-config.json');
+        return Uri.parse('empty:');
     }
 
     Load(): Thenable<any> {

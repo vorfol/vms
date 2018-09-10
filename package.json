@@ -2,8 +2,8 @@
     "name": "vms",
     "displayName": "VMS",
     "description": "",
-    "version": "0.0.3",
-    "publisher": "AppliedTech",
+    "version": "0.0.2",
+    "publisher": "vorfol",
     "engines": {
         "vscode": "^1.26.0"
     },
@@ -11,12 +11,19 @@
         "Other"
     ],
     "activationEvents": [
-        "onCommand:VMS.editProject",
         "onCommand:VMS.buildProject",
-        "workspaceContains:/.vscode/openvms-config.json"
+        "onCommand:VMS.editProject"
     ],
     "main": "./out/extension",
     "contributes": {
+        "menus": {
+            "commandPalette": [
+                {
+                    "command": "VMS.buildProject",
+                    "when": "config.open-vms.build-enabled"
+                }
+            ]
+        },
         "commands": [
             {
                 "command": "VMS.buildProject",
@@ -28,7 +35,46 @@
                 "title": "Edit OpenVMS project settings",
                 "category": "OpenVMS"
             }
-        ]
+        ],
+        "configuration": {
+            "title": "OpenVMS settings",
+            "properties": {
+                "open-vms.build-enabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable build command"
+                },
+                "open-vms.connection.host": {
+                    "type": "string",
+                    "default": "host",
+                    "description": "OpenVMS host to build, run and debug current workspace"
+                },
+                "open-vms.connection.port": {
+                    "type": "number",
+                    "default": 22,
+                    "description": "OpenVMS ssh port"
+                },
+                "open-vms.connection.username": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Username"
+                },
+                "open-vms.connection.password": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Password"
+                },
+                "open-vms.exclude": {
+                    "type": "array",
+                    "default": [ 
+                        "**/.vscode/**/*.*", 
+                        "**/node-modules/**/*.*",
+                        "**/our/**/*.*"
+                    ],
+                    "description": "Exclude files masks"
+                }
+            }
+        }
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",

@@ -2,7 +2,7 @@ import {workspace, window, commands} from 'vscode';
 
 export class WorkspaceSettings {
 
-    private static readonly _errorMessage = `You should configure "OpenVms settings" for current workspace`;
+    private static readonly _errorMessage = `Please, configure "Extensions->OpenVMS settings"`;
     private static readonly _openSettingsCommand = 'workbench.action.openWorkspaceSettings';
     private static readonly _configurationSection = 'open-vms';
 
