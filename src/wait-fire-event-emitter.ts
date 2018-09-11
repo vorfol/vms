@@ -1,7 +1,11 @@
 import { EventEmitter } from "vscode";
 import { Event } from "vscode";
 
-export class WaitFireEmitter<T> {
+/**
+ * Waiting _wait_msec before firing the event. If a new fire() was called while waiting, the timeout starts again.
+ * Only last event will be fired, all previous data will be discarded.
+ */
+export class WaitFireEventEmitter<T> {
 
     private _emitter = new EventEmitter<T>();
 

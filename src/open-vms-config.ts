@@ -2,32 +2,10 @@
 import { Range, workspace, Uri, WorkspaceEdit, Position} from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import { UserPasswordHostConfig, HostConfig } from './user-password-config';
+import { FilterConfig, CPP_FilterConfig } from './filter-config';
 
 export type ConnectMethod = 'user_password' | 'keys';
-
-export interface HostConfig {
-    method: string;
-    host: string;
-    port?: number;
-    username?: string;
-    password?: string;
-}
-
-export interface FilterConfig {
-    include: string;
-}
-
-export class UserPasswordHostConfig implements HostConfig {
-    method: string = 'user_password';    
-    host: string = '';
-    port: number = 22;
-    username: string  = '';
-    password: string = '';
-}
-
-export class CPP_FilterConfig {
-    include: string = '**/*.{c,cpp,h}';
-}
 
 export interface ConfigSerializer {
     

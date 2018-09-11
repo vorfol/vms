@@ -1,14 +1,9 @@
 import {workspace} from 'vscode';
 
 import { Configuration } from './configuration/config';
+import { CPP_FilterConfig } from './filter-config';
 
-export class Filter {
-
-    include: string = '';
-    exclude: string = '';
-}
-
-let _filter = new Filter();
+let _filter = new CPP_FilterConfig();
 
 /** Get list of files to send using current workspace settings
  * 

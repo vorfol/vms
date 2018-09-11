@@ -4,7 +4,7 @@ import { Uri } from 'vscode';
 import { workspace } from "vscode";
 import { Disposable } from "vscode";
 import { Event } from "vscode";
-import { WaitFireEmitter } from "../wait-fire-emitter";
+import { WaitFireEventEmitter } from "../wait-fire-event-emitter";
 //import { EventEmitter } from "vscode";
 
 export class WS_SerializeHelper implements SerializeHelper {
@@ -59,7 +59,7 @@ export class WS_Editor implements Editor {
 
 export class WS_Serializer implements Serializer {
 
-    private _emitter = new WaitFireEmitter<null>(1000);
+    private _emitter = new WaitFireEventEmitter<null>(1000);
     //private _emitter = new EventEmitter<null>(); //fire immediate
 
     onDidChangeOutside: Event<null> = this._emitter.event;
