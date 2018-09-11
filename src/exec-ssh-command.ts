@@ -11,7 +11,7 @@ type ExecCmdResult = { stdout: string, stderr: string};
  */
 export function ExecSSHCommand(client : Client, command: string) : Promise<ExecCmdResult> {
     return new Promise((resolve : (result : ExecCmdResult) => void, reject : (error:Error) => void) => {
-        let must_wait = !client.exec(command, (error : Error, stream : ClientChannel) => {
+        client.exec(command, (error : Error, stream : ClientChannel) => {
             if (error) {
                 reject(error);
             }
@@ -26,6 +26,5 @@ export function ExecSSHCommand(client : Client, command: string) : Promise<ExecC
                 });
             }
         });
-        console.log("ExecSSHCommand must wait: " + must_wait);
     });
 }

@@ -2,7 +2,13 @@ import {Client} from 'ssh2';
 import { Configuration } from './configuration/config';
 import { UserPasswordHostConfig } from './user-password-config';
 
-let _messagePasswordIsEmpty = `Please, enter password.`;
+import * as nls from 'vscode-nls';
+let _localize = nls.loadMessageBundle();
+
+const _messagePasswordIsEmpty = _localize('create_ssh.warning', 'Please, enter password.');
+const _log_end = _localize('create_ssh.ends', 'Client ends');
+const _log_close_err = _localize('create_ssh.closed_err', 'Client closed with error');
+const _log_close = _localize('create_ssh.closed', 'Client closed');
 
 let _settings: UserPasswordHostConfig = new UserPasswordHostConfig();
 
@@ -39,14 +45,14 @@ export function CreateSSHClient(config: Configuration)  {
         });
         //OnEnd
         client.on('end', () => {
-            console.log("Client ends");
+            console.log(_log_end);
         });
         //OnClose
         client.on('close', (hadError) => {
             if (hadError) {
-                console.log(`Client closed with error`);
+                console.log(_log_close_err);
             } else {
-                console.log(`Client closed`);
+                console.log(_log_close);
             }
         });
         //client.connect(Object.assign({debug: console.log}, _settings));

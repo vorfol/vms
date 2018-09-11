@@ -7,6 +7,9 @@ import {Stats, InputAttributes} from 'ssh2-streams';
 
 import {ToOutputChannel} from './output-channel';
 
+import * as nls from 'vscode-nls';
+let _localize = nls.loadMessageBundle();
+
 const localStatFn = util.promisify(fs.stat);
 const mTimeTreshold = 2;    //two seconds
 
@@ -25,7 +28,8 @@ const mTimeTreshold = 2;    //two seconds
 export function SendFile(sftp : SFTPWrapper, file : Uri ) : Promise<boolean> {
     let relativeFile = workspace.asRelativePath(file);
     //TODO: verbose? silent?
-    ToOutputChannel(`Sending file: ${relativeFile}`);
+    let str_out = _localize('send_file.sending', 'Sending file: {0}', relativeFile);
+    ToOutputChannel(str_out);
     return new Promise(async (resolve : (ok:boolean) => void, reject : (error:Error) => void) => {
         //TODO: do read from VFS and open-write-close sftp. Now only local FS is supported
         try {
@@ -48,7 +52,8 @@ export function SendFile(sftp : SFTPWrapper, file : Uri ) : Promise<boolean> {
                 Math.abs(localStat.atimeMs/1000 - sftpStat.atime) < mTimeTreshold )  //sftpStat.mtime in seconds!
             {
                 //TODO: verbose? silent?
-                ToOutputChannel(`File: ${relativeFile} has not been altered`);
+                let str_out = _localize('send_file.not_altered', 'File: {0} has not been altered', relativeFile);
+                ToOutputChannel(str_out);
                 resolve(false); //file not sent, but not reject this operation
             } else {
                 //
@@ -99,7 +104,8 @@ export function SendFile(sftp : SFTPWrapper, file : Uri ) : Promise<boolean> {
                                 reject(err);
                             } else {
                                 //TODO: verbose? silent?
-                                ToOutputChannel(`File: ${relativeFile} has been sent`);
+                                let str_out = _localize('send_file.sent', 'File: {0} has been sent', relativeFile);
+                                ToOutputChannel(str_out);
                                 resolve(true);  //file sent successfully        
                             }
                         });

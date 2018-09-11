@@ -1,5 +1,8 @@
 import { window } from "vscode";
 
+import * as nls from 'vscode-nls';
+let _localize = nls.loadMessageBundle();
+
 export interface HostConfig {
     method: string;
     host: string;
@@ -26,7 +29,8 @@ export class UserPasswordHostConfig implements HostConfig {
     ensurePassword() : Thenable<boolean> {
         return new Promise<boolean>((resolve, reject) => {
             if (!this.password) {
-                let prompt = `Enter password for ${this.username?this.username+'@':''}${this.host}:${this.port}`;
+                let prompt = _localize('user_pass_cfg.prompt', "Enter password for {0}{1}:{2}", 
+                                        this.username?this.username+'@':'', this.host, this.port);
                 window.showInputBox( { password: true, prompt })
                 .then((value) => {
                     if (value) {

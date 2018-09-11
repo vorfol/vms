@@ -2,6 +2,9 @@ import {window} from 'vscode';
 
 import {WorkspaceSettings} from './workspace-settings';
 
+import * as nls from 'vscode-nls';
+let _localize = nls.loadMessageBundle();
+
 export class SSHSettings {
 
     /**
@@ -42,7 +45,8 @@ export class SSHSettings {
      */
     public async EnsurePassword() : Promise<boolean> {
         if (!this.password) {
-            let prompt = `Enter password for ${this.username?this.username+'@':''}${this.host}:${this.port}`;
+            let prompt = _localize('host_settings.prompt', 'Enter password for {0}{1}:{2}',
+                                    this.username?this.username+'@':'', this.host, this.port);
             return new Promise((resolve : (result:boolean) => void, reject) => {
                 window.showInputBox( { password: true, prompt })
                 .then((value) => {

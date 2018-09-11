@@ -1,4 +1,7 @@
 'use strict';
+import * as nls from 'vscode-nls';
+let _localize = nls.config({ locale: 'pseudo' })();
+
 import {commands} from 'vscode';
 import {ExtensionContext} from 'vscode';
  
@@ -10,6 +13,8 @@ import { ProxyConfiguration } from './configuration/proxy-config';
 const _section = 'open-vms';
 
 export function activate(context: ExtensionContext) {
+
+    console.log(_localize('extension.activated', 'OpenVMS extension is activated'));
 
     let _serialize_helper: SerializeHelper = new WS_SerializeHelper(_section);
     let _config: Configuration = new ProxyConfiguration(_serialize_helper);

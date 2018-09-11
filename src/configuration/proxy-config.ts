@@ -1,18 +1,23 @@
 import { Configuration, SerializeHelper } from "./config";
 import { Disposable } from "vscode";
 
+import * as nls from 'vscode-nls';
+let _localize = nls.loadMessageBundle();
+
 /** Configuration with proxy object
  * 
  */
 export class ProxyConfiguration implements Configuration {
     
+    private readonly _log_disposed = _localize('common.disposed_msg', '{0} disposed', 'ProxyConfiguration');
+
     private _dispose: Disposable[] = [];
     dispose() {
         for(let disp of this._dispose) {
             disp.dispose();
         }
         this._dispose = [];
-        console.log(`ProxyConfiguration disposed`);
+        console.log(this._log_disposed);
     }
 
     private _proxy: any;
@@ -24,7 +29,8 @@ export class ProxyConfiguration implements Configuration {
         this._proxy = {};
 
         this._dispose.push( helper.getSerializer().onDidChangeOutside(() => {
-            console.log(`onDidChange make load ${++this._loadCount}`);
+            let log_msg = _localize('proxy_cong.load_count', 'onDidChangeOutside make load {0}', ++this._loadCount);
+            console.log(log_msg);
             this.load();
         }));
     }

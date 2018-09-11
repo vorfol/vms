@@ -1,8 +1,12 @@
 import {workspace, window, commands} from 'vscode';
 
+import * as nls from 'vscode-nls';
+let _localize = nls.loadMessageBundle();
+
 export class WorkspaceSettings {
 
-    private static readonly _errorMessage = `Please, configure "Extensions->OpenVMS settings"`;
+    private static readonly _errorMessage = _localize('ws_set.error', `Please, configure "Extensions->OpenVMS settings"`);
+    
     private static readonly _openSettingsCommand = 'workbench.action.openWorkspaceSettings';
     private static readonly _configurationSection = 'open-vms';
 

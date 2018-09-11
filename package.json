@@ -66,12 +66,12 @@
                 },
                 "open-vms.filter.include": {
                     "type": "string",
-                    "default": "**/*.*", 
+                    "default": "**/*.*",
                     "description": "Include files masks"
                 },
                 "open-vms.filter.exclude": {
                     "type": "string",
-                    "default": "**/{.vscode,node-modules}/*.*", 
+                    "default": "**/{.vscode,node-modules}/*.*",
                     "description": "Exclude files masks"
                 }
             }
@@ -89,7 +89,8 @@
         "ssh2": "^0.6.1",
         "typescript": "^2.9.2",
         "util": "^0.11.0",
-        "vscode": "^1.1.21"
+        "vscode": "^1.1.21",
+        "vscode-nls": "^4.0.0"
     },
     "dependencies": {
         "@types/ssh2": "^0.5.35",

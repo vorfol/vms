@@ -7,7 +7,12 @@ import { Event } from "vscode";
 import { WaitFireEventEmitter } from "../wait-fire-event-emitter";
 //import { EventEmitter } from "vscode";
 
+import * as nls from 'vscode-nls';
+let _localize = nls.loadMessageBundle();
+
 export class WS_SerializeHelper implements SerializeHelper {
+
+    private readonly _log_disposed = _localize('common.disposed_msg', '{0} disposed', 'WS_SerializeHelper');
 
     _serializer: Serializer;
 
@@ -29,19 +34,23 @@ export class WS_SerializeHelper implements SerializeHelper {
     dispose(): void {
         this._serializer.dispose();
         //this._editor.dispose(); TODO?
-        console.log(`WS_SerializeHelper disposed`);
+        console.log(this._log_disposed);
     } 
 
 }
 
+const _ws_scheme = 'vscode-command';
+
 export class WS_Editor implements Editor {
     
+    private readonly _log_disposed = _localize('common.disposed_msg', '{0} disposed', 'WS_Editor');
+
     dispose(): void {
-        console.log(`WS_Editor disposed`);
+        console.log(this._log_disposed);
     }
 
     invoke(uri: Uri): Thenable<boolean> {
-        if (uri.scheme === 'vscode-command') {
+        if (uri.scheme === _ws_scheme) {
             return new Promise<boolean>((resolve, reject) => {
                 commands.executeCommand(uri.path).then(() => {
                     resolve(true);
@@ -59,7 +68,11 @@ export class WS_Editor implements Editor {
 
 export class WS_Serializer implements Serializer {
 
-    private _emitter = new WaitFireEventEmitter<null>(1000);
+    private readonly _log_disposed = _localize('common.disposed_msg', '{0} disposed', 'WS_Serializer');
+
+    private readonly _timeout = 1000;
+
+    private _emitter = new WaitFireEventEmitter<null>(this._timeout);
     //private _emitter = new EventEmitter<null>(); //fire immediate
 
     onDidChangeOutside: Event<null> = this._emitter.event;
@@ -73,7 +86,7 @@ export class WS_Serializer implements Serializer {
             }
         }
         this._dispose = [];
-        console.log(`WS_Serializer disposed`);
+        console.log(this._log_disposed);
     }
     
     private readonly _command = 'workbench.action.openWorkspaceSettings';
@@ -121,7 +134,7 @@ export class WS_Serializer implements Serializer {
     }
 
     getUri(): Uri {
-        return Uri.parse('vscode-command:'+ this._command);
+        return Uri.parse(_ws_scheme + ':' + this._command);
     }
 
 }

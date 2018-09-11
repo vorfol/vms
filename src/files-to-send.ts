@@ -15,6 +15,6 @@ export async function FilesToSend(config: Configuration) {
         config.add('filter', _filter);
         await config.load();
     }
-    let files = workspace.findFiles(_filter.include);
+    let files = workspace.findFiles(_filter.include, _filter.exclude);
     return files;
 }
