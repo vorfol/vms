@@ -12,19 +12,22 @@ const _log_close = _localize('create_ssh.closed', 'Client closed');
 
 let _settings: UserPasswordHostConfig = new UserPasswordHostConfig();
 
+export async function InitCfg(config: Configuration) {
+    if (!await config.get('connection')) {
+        config.add('connection', _settings);
+        await config.load();
+        console.log('create-ssh-client InitCfg loaded');
+    }
+}
+
 /**
  * Create SSH client using settings from current workspace.
  * 
  * @param config configuration assistent
  */
-export function CreateSSHClient(config: Configuration)  {
+export function CreateSSHClient()  {
     return new Promise(async (resolve : (client : Client) => void, reject: (error: Error) => void) => {
         
-        if (!await config.get('connection')) {
-            config.add('connection', _settings);
-            await config.load();
-        }
-
         let client = new Client();
 
         //Allow user to setup password, if it doesn't exist

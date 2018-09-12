@@ -2,6 +2,24 @@ import { Uri } from "vscode";
 import { Event } from "vscode";
 import { Disposable } from "vscode";
 
+/** Configuration
+ * 
+ */
+export interface Configuration extends Disposable {
+    
+    add(section: string, object: any) : boolean;
+
+    get(section: string) : Thenable<any>;
+
+    remove(section: string) : boolean;
+
+    load() : Thenable<boolean>;
+    
+    save() : Thenable<boolean>;
+    
+    edit() : Thenable<boolean>;
+}
+
 /** Serializer 
  * 
 */
@@ -34,21 +52,4 @@ export interface SerializeHelper extends Disposable {
     getEditor() : Editor;
 }
 
-/** Configuration
- * 
- */
-export interface Configuration extends Disposable {
-    
-    add(section: string, object: any) : boolean;
-
-    get(section: string) : Thenable<any>;
-
-    remove(section: string) : boolean;
-
-    load() : Thenable<boolean>;
-    
-    save() : Thenable<boolean>;
-    
-    edit() : Thenable<boolean>;
-}
 

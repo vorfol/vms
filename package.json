@@ -20,81 +20,79 @@
             "commandPalette": [
                 {
                     "command": "VMS.buildProject",
-                    "when": "config.open-vms.build-enabled"
+                    "when": "config.open-vms.common.build-enabled"
                 }
             ]
         },
         "commands": [
             {
                 "command": "VMS.buildProject",
-                "title": "Build on VMS",
-                "category": "OpenVMS"
+                "title": "%command.buildProject.title%",
+                "category": "%command.category%"
             },
             {
                 "command": "VMS.editProject",
-                "title": "Edit OpenVMS project settings",
-                "category": "OpenVMS"
+                "title": "%command.editProject.title%",
+                "category": "%command.category%"
             }
         ],
         "configuration": {
-            "title": "OpenVMS settings",
+            "title": "%configuration.title%",
             "properties": {
-                "open-vms.build-enabled": {
+                "open-vms.common.build-enabled": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Enable build command"
+                    "description": "%properties.common.build-enabled.description%"
                 },
                 "open-vms.connection.host": {
                     "type": "string",
                     "default": "host",
-                    "description": "OpenVMS host to build, run and debug current workspace"
+                    "description": "%properties.connection.host.description%"
                 },
                 "open-vms.connection.port": {
                     "type": "number",
                     "default": 22,
-                    "description": "OpenVMS ssh port"
+                    "description": "%properties.connection.port.description%"
                 },
                 "open-vms.connection.username": {
                     "type": "string",
                     "default": "",
-                    "description": "Username"
+                    "description": "%properties.connection.username.description%"
                 },
                 "open-vms.connection.password": {
                     "type": "string",
                     "default": "",
-                    "description": "Password"
+                    "description": "%properties.connection.password.description%"
                 },
                 "open-vms.filter.include": {
                     "type": "string",
                     "default": "**/*.*",
-                    "description": "Include files masks"
+                    "description": "%properties.filter.include.description%"
                 },
                 "open-vms.filter.exclude": {
                     "type": "string",
                     "default": "**/{.vscode,node-modules}/*.*",
-                    "description": "Exclude files masks"
+                    "description": "%properties.filter.exclude.description%"
                 }
             }
         }
     },
     "scripts": {
-        "vscode:prepublish": "npm run compile",
         "compile": "tsc -p ./",
         "watch": "tsc -watch -p ./",
         "postinstall": "node ./node_modules/vscode/bin/install"
     },
     "devDependencies": {
-        "@types/node": "^8.x.x",
-        "fs": "0.0.1-security",
-        "ssh2": "^0.6.1",
-        "typescript": "^2.9.2",
-        "util": "^0.11.0",
-        "vscode": "^1.1.21",
-        "vscode-nls": "^4.0.0"
+        "@types/node": "^10.x.x",
+        "typescript": "^3.x.x",
+        "@types/ssh2": "^0.5.35"
     },
     "dependencies": {
-        "@types/ssh2": "^0.5.35",
-        "ssh2": "^0.6.1"
+        "vscode": "^1.1.21",
+        "util": "^0.11.0",
+        "fs": "0.0.1-security",
+        "ssh2": "^0.6.1",
+        "vscode-nls": "^4.0.0"
     },
     "enableProposedAPI": true
 }

@@ -58,28 +58,42 @@ export class ProxyConfiguration implements Configuration {
         return false;
     }
 
-    load(): Thenable<boolean> {
-        return new Promise<boolean>(async (resolve, reject) => {
-            let serializer = this._helper.getSerializer();
-            serializer.load(this._proxy).then( (loaded_obj) => {
-                for(let section in loaded_obj) {
-                    if (this._proxy[section]) {
-                        let sect_obj = loaded_obj[section];
-                        if (sect_obj) {
-                            for(let s_key in sect_obj) {
-                                this._proxy[section][s_key] = sect_obj[s_key];
+    /**
+     * To ensure that serializer.load() will be called once
+     */
+    private _loadPromise: Promise<boolean> | undefined;
+
+    load(): Thenable<boolean> 
+    {
+        console.log('proxy-config load() called');
+        if (!this._loadPromise) {
+            this._loadPromise = new Promise<boolean>(async (resolve, reject) => {
+                let serializer = this._helper.getSerializer();
+                serializer.load(this._proxy).then( (loaded_obj) => {
+                    for(let section in loaded_obj) {
+                        if (this._proxy[section]) {
+                            let sect_obj = loaded_obj[section];
+                            if (sect_obj) {
+                                for(let s_key in sect_obj) {
+                                    this._proxy[section][s_key] = sect_obj[s_key];
+                                }
                             }
+                        } else {
+                            //no section in _proxy, TODO: add? or generate error?
                         }
-                    } else {
-                        //no section in _proxy, TODO: add? or generate error?
                     }
-                }
-                resolve(true);
-            }, (err) => {
-                //TODO: log err
-                resolve(false);
+                    console.log('proxy-config load() OK');
+                    this._loadPromise = undefined;
+                    resolve(true);
+                }, (err) => {
+                    //TODO: log err
+                    console.log('proxy-config load() FAILED');
+                    this._loadPromise = undefined;
+                    resolve(false);
+                });
             });
-        });
+        }
+        return this._loadPromise;
     }
 
     save(): Thenable<boolean> {
