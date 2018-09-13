@@ -5,6 +5,7 @@ import { EventEmitter } from "vscode";
 
 import * as nls from 'vscode-nls';
 import * as fs from "fs";
+import * as path from "path";
 import { workspace } from "vscode";
 
 let _localize = nls.loadMessageBundle();
@@ -58,6 +59,27 @@ export interface ConfigStorage extends Disposable{
     readonly onDidChangeOutside: Event<null>;
 }
 
+export interface Config {
+    add(cfg: ConfigSection) : boolean;
+    get(section: string) : Thenable<ConfigSection|undefined>;
+    load() : Thenable<ConfigStorageActionResult>;
+    save() : Thenable<ConfigStorageActionResult>;
+}
+
+export interface ConfigEditor {
+    invoke() : Thenable<boolean>;
+}
+
+export interface ConfigHelper {
+
+    getConfig() : Config;
+
+    getStorage() : ConfigStorage;
+
+    getEditor() : ConfigEditor;
+
+}
+
 /**
  * ConfigPool
  * 
@@ -67,7 +89,7 @@ export interface ConfigStorage extends Disposable{
  * 
  */
 
-export class ConfigPool implements Disposable {
+export class ConfigPool implements Disposable, Config {
 
     private readonly _log_disposed = _localize('common.disposed_msg', '{0} disposed', 'ConfigPool');
 
@@ -104,7 +126,10 @@ export class ConfigPool implements Disposable {
      * Get kept ConfigSection.
      */
     get(section: string) : Thenable<ConfigSection|undefined> {
-        return new Promise<ConfigSection>((resolve,reject) => {
+        return new Promise<ConfigSection>(async (resolve,reject) => {
+            if (this._loadPromise) {
+                await this._loadPromise;
+            }
             resolve(this._pool[section]);
         });
     }
@@ -115,7 +140,6 @@ export class ConfigPool implements Disposable {
             this._loadPromise = new Promise<ConfigStorageActionResult>(async (resolve,reject) => {
                 //do load
                 this._storage.fillStart().then(async (started) => {
-                    this._loadPromise = undefined;
                     if (started === ConfigStorageActionResult.ok) {
                         let ret_code = ConfigStorageActionResult.ok;
                         for(let section_name in this._pool) {
@@ -142,6 +166,7 @@ export class ConfigPool implements Disposable {
                     } else {
                         resolve(started); //didn't start
                     }
+                    this._loadPromise = undefined;
                 });
             });
         }
@@ -154,7 +179,6 @@ export class ConfigPool implements Disposable {
             this._savePromise = new Promise<ConfigStorageActionResult>(async (resolve,reject) => {
                 //do save
                 this._storage.storeStart().then( async (started) => {
-                    this._savePromise = undefined;
                     if (started === ConfigStorageActionResult.ok) {
                         let ret_code = ConfigStorageActionResult.ok;
                         for(let section_name in this._pool) {
@@ -172,9 +196,11 @@ export class ConfigPool implements Disposable {
                         }
                         this._storage.storeEnd().then((ended) => {
                             resolve(ended | ret_code);
+                            this._savePromise = undefined;
                         });
                     } else {
                         resolve(started); //didn't start
+                        this._savePromise = undefined;
                     }
                 });
             });
@@ -197,10 +223,10 @@ export class UserPasswordSection implements ConfigSection {
     username: string = '';
     password: string = '';
 
-    private readonly _section = 'connection';
+    static readonly _section = 'connection';
 
     name(): string {
-        return this._section;
+        return UserPasswordSection._section;
     }
 
     store(): ConfigData {
@@ -251,14 +277,14 @@ export class UserPasswordSection implements ConfigSection {
     }
 }
 
-export class FilterdSection implements ConfigSection {
+export class FilterSection implements ConfigSection {
     include: string = '';
     exclude: string = '';
 
-    private readonly _section = 'filter';
+    static readonly _section = 'filter';
 
     name(): string {
-        return this._section;
+        return FilterSection._section;
     }
 
     store(): ConfigData {
@@ -291,9 +317,50 @@ export class FilterdSection implements ConfigSection {
  * 
  */
 
+ export class DummyStorage implements ConfigStorage {
+
+    fillStart(): Thenable<ConfigStorageActionResult> {
+        return Promise.resolve(ConfigStorageActionResult.prepare_failed);
+    }     
+    
+    fillData(section: string, data: ConfigData): Thenable<ConfigStorageActionResult> {
+        return Promise.resolve(ConfigStorageActionResult.some_data_failed);
+    }
+
+    fillEnd(): Thenable<ConfigStorageActionResult> {
+        return Promise.resolve(ConfigStorageActionResult.end_failed);
+    }
+
+    storeStart(): Thenable<ConfigStorageActionResult> {
+        return Promise.resolve(ConfigStorageActionResult.prepare_failed);
+    }
+
+    storeData(section: string, data: ConfigData): Thenable<ConfigStorageActionResult> {
+        return Promise.resolve(ConfigStorageActionResult.some_data_failed);
+    }
+
+    storeEnd(): Thenable<ConfigStorageActionResult> {
+        return Promise.resolve(ConfigStorageActionResult.end_failed);
+    }
+
+    protected _emitter: EventEmitter<null> = new EventEmitter<null>();
+    onDidChangeOutside: Event<null> = this._emitter.event;
+    
+    dispose() {
+        this._emitter.dispose();
+    }
+
+
+ }
+
+ /**
+  * 
+  * 
+  * 
+  */
  export class FS_ConfigStorage implements ConfigStorage {
 
-    private readonly _log_disposed = _localize('common.disposed_msg', '{0} disposed', 'ConfigPool');
+    private readonly _log_disposed = _localize('common.disposed_msg', '{0} disposed', 'FS_ConfigStorage');
 
     private _dispose: Disposable[] = [];
     dispose() {
@@ -305,12 +372,19 @@ export class FilterdSection implements ConfigSection {
         console.log(this._log_disposed);
     }
      
+    protected _skipNextFire = false;
     protected _filename: string;
     constructor(filename: string) {
         this._filename = filename;
         let watcher = workspace.createFileSystemWatcher(this._filename);
         this._dispose.push( watcher.onDidChange(() => {
-            this._emitter.fire();
+            if (!this._storePromise) {
+                if (this._skipNextFire) {
+                    this._skipNextFire = false;
+                } else {
+                    this._emitter.fire();
+                }
+            }
         }));
         this._dispose.push(watcher);
     }
@@ -321,7 +395,6 @@ export class FilterdSection implements ConfigSection {
         if (!this._fillStartPromise) {
             this._fillStartPromise = new Promise<ConfigStorageActionResult>(async (resolve, reject) => {
                 fs.readFile(this._filename, (err, data) => {
-                    this._fillStartPromise = undefined;
                     if (err) {
                         resolve(ConfigStorageActionResult.prepare_failed);
                     } else {
@@ -333,6 +406,7 @@ export class FilterdSection implements ConfigSection {
                             resolve(ConfigStorageActionResult.prepare_failed);
                         }
                     }
+                    this._fillStartPromise = undefined;
                 });
             })
         } 
@@ -343,7 +417,7 @@ export class FilterdSection implements ConfigSection {
         if (this._json_data && this._json_data[section]) {
             let json_section = this._json_data[section];
             for(let key in data) {
-                if (json_section[key]) {
+                if (json_section[key] !== undefined) {
                     data[key] = json_section[key];
                 }
             }
@@ -373,7 +447,6 @@ export class FilterdSection implements ConfigSection {
     storeEnd(): Thenable<ConfigStorageActionResult> {
         if (!this._storePromise) {
             this._storePromise = new Promise<ConfigStorageActionResult>((resolve, reject) => {
-                this._storePromise = undefined;
                 fs.writeFile(this._filename, JSON.stringify(this._json_data, null, 4), (err) => {
                     this._json_data = {};
                     if (err) {
@@ -381,6 +454,8 @@ export class FilterdSection implements ConfigSection {
                     } else {
                         resolve(ConfigStorageActionResult.ok);
                     }
+                    this._storePromise = undefined;
+                    this._skipNextFire = true;
                 });
             })
         }
@@ -392,9 +467,70 @@ export class FilterdSection implements ConfigSection {
 
  }
 
+/**
+ * 
+ * ConfigHelper omplementation
+ * 
+ * 
+ */
 
+export class FS_Proxy_Config implements ConfigHelper {
 
+    protected static _config : Config;
+    protected static _storage : ConfigStorage;
+    protected static _editor : ConfigEditor;
+    
+    getConfig(): Config {
+        if (!FS_Proxy_Config._config) {
+            let storage = this.getStorage();
+            FS_Proxy_Config._config = new ConfigPool(storage);
+        }
+        return FS_Proxy_Config._config;
+    }    
+    
+    getStorage(): ConfigStorage {
+        if (!FS_Proxy_Config._storage) {
+            if (workspace.rootPath) {
+                let filename = path.join(workspace.rootPath, '.vscode/openvms-settings.json');
+                FS_Proxy_Config._storage = new FS_ConfigStorage(filename);
+            } else {
+                FS_Proxy_Config._storage = new DummyStorage();
+            }
+        }
+        return FS_Proxy_Config._storage;
+    }
 
+    getEditor(): ConfigEditor {
+        return FS_Proxy_Config._editor;
+    }
 
+}
 
+export async function Test()  {
+    
+    let helper : ConfigHelper = new FS_Proxy_Config();
+
+    let cfg = helper.getConfig();
+
+    let userpass = new UserPasswordSection();
+    cfg.add(userpass);
+
+    let filter = new FilterSection();
+    cfg.add(filter);
+
+    setTimeout(async () => {
+        let userpass_get = await cfg.get(UserPasswordSection._section);
+        console.log(userpass_get === userpass);
+        let filetr_get = await cfg.get(FilterSection._section);
+        console.log(filetr_get === filter);
+        let save_result = await cfg.save();
+        console.log(save_result);
+        userpass_get = await cfg.get(UserPasswordSection._section);
+        console.log(userpass_get === userpass);
+        filetr_get = await cfg.get(FilterSection._section);
+        console.log(filetr_get === filter);
+    }, 1000);
+    
+    return true;
+}
 

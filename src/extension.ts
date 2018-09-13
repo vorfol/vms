@@ -19,6 +19,10 @@ let _localize = nls.config()();
 
 const _section = 'open-vms';
 
+import {Test} from './configuration/config_v2';
+
+Test();
+
 export async function activate(context: ExtensionContext) {
 
     console.log(_localize('extension.activated', 'OpenVMS extension is activated'));

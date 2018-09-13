@@ -17,7 +17,7 @@ export class FS_SerializeHelper implements SerializeHelper {
 
     private readonly _log_disposed = _localize('common.disposed_msg', '{0} disposed', 'FS_SerializeHelper');
     
-    protected _rel_file_name = '.vscode/openvms-config.json';
+    protected _rel_file_name = '.vscode/openvms-settings.json';
 
     _serializer: Serializer;
 
