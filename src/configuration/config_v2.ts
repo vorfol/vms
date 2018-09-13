@@ -46,7 +46,7 @@ export enum ConfigStorageActionResult {
     end_failed = 8
 }
 
-export interface ConfigStorage extends Disposable{
+export interface ConfigStorage {
 
     fillStart() : Thenable<ConfigStorageActionResult>;
     fillData(section: string, data: ConfigData) : Thenable<ConfigStorageActionResult>;
@@ -56,12 +56,13 @@ export interface ConfigStorage extends Disposable{
     storeData(section: string, data: ConfigData) : Thenable<ConfigStorageActionResult>;
     storeEnd() : Thenable<ConfigStorageActionResult>;
 
-    readonly onDidChangeOutside: Event<null>;
+    isStoring(): boolean;
 }
 
 export interface Config {
     add(cfg: ConfigSection) : boolean;
     get(section: string) : Thenable<ConfigSection|undefined>;
+
     load() : Thenable<ConfigStorageActionResult>;
     save() : Thenable<ConfigStorageActionResult>;
 }
@@ -89,26 +90,21 @@ export interface ConfigHelper {
  * 
  */
 
-export class ConfigPool implements Disposable, Config {
-
-    private readonly _log_disposed = _localize('common.disposed_msg', '{0} disposed', 'ConfigPool');
-
-    private _dispose: Disposable[] = [];
-    dispose() {
-        for(let disp of this._dispose) {
-            disp.dispose();
-        }
-        this._dispose = [];
-        console.log(this._log_disposed);
-    }
+export class ConfigPool implements Config {
 
     protected _storage: ConfigStorage;
 
     constructor(storage: ConfigStorage) {
         this._storage = storage;
-        this._dispose.push( this._storage.onDidChangeOutside(() => {
-            this.load();
-        }));
+    }
+
+    setStorage(storage: ConfigStorage) {
+        this._storage = storage;
+        this.load();
+    }
+
+    getStorage() : ConfigStorage {
+        return this._storage;
     }
 
     protected _pool : ConfigObject = {};
@@ -318,6 +314,10 @@ export class FilterSection implements ConfigSection {
  */
 
  export class DummyStorage implements ConfigStorage {
+    
+    isStoring(): boolean {
+        return false;
+    }
 
     fillStart(): Thenable<ConfigStorageActionResult> {
         return Promise.resolve(ConfigStorageActionResult.prepare_failed);
@@ -342,15 +342,6 @@ export class FilterSection implements ConfigSection {
     storeEnd(): Thenable<ConfigStorageActionResult> {
         return Promise.resolve(ConfigStorageActionResult.end_failed);
     }
-
-    protected _emitter: EventEmitter<null> = new EventEmitter<null>();
-    onDidChangeOutside: Event<null> = this._emitter.event;
-    
-    dispose() {
-        this._emitter.dispose();
-    }
-
-
  }
 
  /**
@@ -360,33 +351,9 @@ export class FilterSection implements ConfigSection {
   */
  export class FS_ConfigStorage implements ConfigStorage {
 
-    private readonly _log_disposed = _localize('common.disposed_msg', '{0} disposed', 'FS_ConfigStorage');
-
-    private _dispose: Disposable[] = [];
-    dispose() {
-        for(let disp of this._dispose) {
-            disp.dispose();
-        }
-        this._dispose = [];
-        this._emitter.dispose();
-        console.log(this._log_disposed);
-    }
-     
-    protected _skipNextFire = false;
     protected _filename: string;
     constructor(filename: string) {
         this._filename = filename;
-        let watcher = workspace.createFileSystemWatcher(this._filename);
-        this._dispose.push( watcher.onDidChange(() => {
-            if (!this._storePromise) {
-                if (this._skipNextFire) {
-                    this._skipNextFire = false;
-                } else {
-                    this._emitter.fire();
-                }
-            }
-        }));
-        this._dispose.push(watcher);
     }
 
     protected _json_data: any = {};
@@ -455,17 +422,23 @@ export class FilterSection implements ConfigSection {
                         resolve(ConfigStorageActionResult.ok);
                     }
                     this._storePromise = undefined;
-                    this._skipNextFire = true;
                 });
             })
         }
         return this._storePromise;
     }
 
-    private _emitter = new EventEmitter<null>();
-    onDidChangeOutside: Event<null> = this._emitter.event;
+    isStoring(): boolean {
+        return !!this._storePromise;
+    }
 
- }
+}
+
+export class DummyEditor implements ConfigEditor {
+    invoke() : Thenable<boolean> {
+        return Promise.resolve(false);
+    }
+}
 
 /**
  * 
@@ -476,39 +449,85 @@ export class FilterSection implements ConfigSection {
 
 export class FS_Proxy_Config implements ConfigHelper {
 
-    protected static _config : Config;
-    protected static _storage : ConfigStorage;
-    protected static _editor : ConfigEditor;
+    protected _config : ConfigPool;
+    protected _storage : ConfigStorage;
+    protected _editor : ConfigEditor;
+
+    private readonly _relative_file_name = '.vscode/openvms-settings.json';
+
+    protected constructor() {
+        this._storage = this.getStorage();
+        this._config = new ConfigPool(this._storage);
+        this._editor = new DummyEditor();
+    }
+
+    private static _instance : FS_Proxy_Config | undefined = undefined;
+    static getConfigHelper() : FS_Proxy_Config {
+        if (FS_Proxy_Config._instance === undefined) {
+            FS_Proxy_Config._instance = new FS_Proxy_Config();
+        }
+        return FS_Proxy_Config._instance;
+    }
     
     getConfig(): Config {
-        if (!FS_Proxy_Config._config) {
+        if (!this._config) {
             let storage = this.getStorage();
-            FS_Proxy_Config._config = new ConfigPool(storage);
+            this._config = new ConfigPool(storage);
         }
-        return FS_Proxy_Config._config;
-    }    
+        return this._config;
+    }
+
+    saveConfig(): Thenable<ConfigStorageActionResult>{
+        if (this._config) {
+            return this._config.save();
+        }
+        return Promise.resolve(ConfigStorageActionResult.fail);
+    }
     
+    protected _file_name: string = '';
     getStorage(): ConfigStorage {
-        if (!FS_Proxy_Config._storage) {
+        if (!this._storage) {
             if (workspace.rootPath) {
-                let filename = path.join(workspace.rootPath, '.vscode/openvms-settings.json');
-                FS_Proxy_Config._storage = new FS_ConfigStorage(filename);
+                this._file_name = path.join(workspace.rootPath, this._relative_file_name);
+                this._storage = new FS_ConfigStorage(this._file_name);
+                let watcher = workspace.createFileSystemWatcher(this._file_name);
+                watcher.onDidChange((uri) => {
+                    if (!this._storage.isStoring()) {
+                        this._config.load();
+                    }
+                });
             } else {
-                FS_Proxy_Config._storage = new DummyStorage();
+                this._storage = new DummyStorage();
             }
+            workspace.onDidChangeWorkspaceFolders((e) => {
+                if (this._storage instanceof DummyStorage) {
+                    //create new FS_ConfigStorage
+                }
+            })
         }
-        return FS_Proxy_Config._storage;
+        return this._storage;
+    }
+
+    protected createFS_Storage(rootPath: string) : void {
+        this._file_name = path.join(workspace.rootPath, this._relative_file_name);
+        this._storage = new FS_ConfigStorage(this._file_name);
+        let watcher = workspace.createFileSystemWatcher(this._file_name);
+        watcher.onDidChange((uri) => {
+            if (!this._storage.isStoring()) {
+                this._config.load();
+            }
+        });
     }
 
     getEditor(): ConfigEditor {
-        return FS_Proxy_Config._editor;
+        return this._editor;
     }
 
 }
 
 export async function Test()  {
     
-    let helper : ConfigHelper = new FS_Proxy_Config();
+    let helper : ConfigHelper = FS_Proxy_Config.getConfigHelper();
 
     let cfg = helper.getConfig();
 
