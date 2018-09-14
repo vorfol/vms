@@ -24,7 +24,7 @@ let _localize = nls.loadMessageBundle();
 type simplyData = string | number | boolean | null;
 
 export interface ConfigData {
-    [key: string] : (simplyData | Array<simplyData>);
+    [key: string] : (simplyData | Array<ConfigData>);
 }
 
 export interface ConfigSection {
@@ -323,6 +323,99 @@ export class FilterSection implements ConfigSection {
 
 }
 
+export class LabeledUserPasswordSection extends UserPasswordSection {
+
+    label: string = '';
+
+    name(): string {
+        return this.label;
+    }
+
+    store(): ConfigData {
+        let ret = super.store();
+        ret['label'] = this.label;
+        return ret;
+    }
+
+    templateToFillFrom(): ConfigData {
+        let ret = super.templateToFillFrom();
+        ret['label'] = '';
+        return ret;
+    }
+
+    fillFrom(data: ConfigData): boolean {
+        if (typeof data.label === 'string') {
+            this.label = data.label;
+        }
+        return super.fillFrom(data);
+    }
+}
+
+export class HostCollection implements ConfigSection {
+
+    default: string = '';
+    hosts: LabeledUserPasswordSection[] = [];
+
+    static readonly _section = 'host_collection';
+    name(): string {
+        return HostCollection._section;
+    }    
+    store(): ConfigData {
+        //TODO: create and fill data from this
+        let ret : ConfigData = {   
+            default: "boston",
+            hosts: [ 
+                { 
+                    label: "default" ,
+                    host: "",
+                    port: 0,
+                    username: ""
+                },
+                {
+                    label: "boston",
+                    host: "10.22.100.11",
+                    port: 22,
+                    username: "vorfolomeev"
+                }
+            ]
+        };
+        return ret;
+    }
+    fillFrom(data: ConfigData): boolean {
+        this.default = '';
+        this.hosts = [];
+
+        if (typeof data.default === 'string') {
+            this.default = data.default;
+        }
+        if (data.hosts instanceof Array) {
+            for(let host of data.hosts) {
+                let tmp : LabeledUserPasswordSection = new LabeledUserPasswordSection();
+                tmp.fillFrom(host);
+                this.hosts.push(tmp);
+            }
+        }
+        return true;
+    }
+    templateToFillFrom(): ConfigData {
+        let ret : ConfigData = {   
+            default: '',
+            hosts: [ 
+                { 
+                    label: '' ,
+                    host: '',
+                    port: 0,
+                    username: '',
+                    password:''
+                }
+            ]
+        };
+        return ret;
+    }
+
+
+}
+
 /**
  * ConfigStorage implementations
  * 
@@ -605,22 +698,29 @@ export async function Test()  {
     let filter = new FilterSection();
     cfg.add(filter);
 
+    let collection = new HostCollection();
+    cfg.add(collection);
+
     setTimeout(async () => {
         let userpass_get = await cfg.get(UserPasswordSection._section);
         console.log('userpass_get === userpass: ' + (userpass_get === userpass));
         let filetr_get = await cfg.get(FilterSection._section);
         console.log('filetr_get === filter: ' + (filetr_get === filter));
+        let collection_get = await cfg.get(HostCollection._section);
+        console.log('collection_get === collection: ' + (collection_get === collection));
 
         userpass.password = "password";
         userpass.username += "+";
 
         let save_result = await cfg.save();
-        console.log('after save' + save_result);
+        console.log('after save ' + save_result);
 
         userpass_get = await cfg.get(UserPasswordSection._section);
         console.log('userpass_get === userpass: ' + (userpass_get === userpass));
         filetr_get = await cfg.get(FilterSection._section);
         console.log('filetr_get === filter: ' + (filetr_get === filter));
+        collection_get = await cfg.get(HostCollection._section);
+        console.log('collection_get === collection: ' + (collection_get === collection));
 
     }, 1000);
     
