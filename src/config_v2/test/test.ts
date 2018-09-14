@@ -1,5 +1,5 @@
 import { ConfigHelper } from "../config_v2";
-import { FS_Proxy_Config_Helper } from "../fs-config-helper";
+import { FS_Config_Helper } from "../fs-config-helper";
 import { UserPasswordSection } from "../sections/user-password";
 import { FilterSection } from "../sections/filter";
 import { HostCollection } from "../sections/host-collection";
@@ -9,7 +9,7 @@ export let _log_this_file = console.log;
 
 export async function Test()  {
     
-    let helper : ConfigHelper = FS_Proxy_Config_Helper.getConfigHelper();
+    let helper : ConfigHelper = FS_Config_Helper.getConfigHelper();
 
     let cfg = helper.getConfig();
 

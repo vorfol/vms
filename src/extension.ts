@@ -5,12 +5,12 @@ import {ExtensionContext} from 'vscode';
 import {RunBuildCommand} from './run-build-command';
 
 import * as nls from 'vscode-nls';
-import { FS_Proxy_Config_Helper } from './config_v2/fs-config-helper';
 
 import { InitCfg as FilesToSendInitCfg } from './files-to-send';
 import { InitCfg as ConnectionInitCfg } from './create-ssh-client';
 import { ConfigHelper, Config } from './config_v2/config_v2';
 import { HostCollection } from './config_v2/sections/host-collection';
+import { VSC_Config_Helper } from './config_v2/vsc-config-helper';
 
 //const _lang_opt = { locale: env.language };
 //const _lang_opt = { locale: 'ru' };
@@ -20,7 +20,7 @@ export async function activate(context: ExtensionContext) {
 
     console.log(_localize('extension.activated', 'OpenVMS extension is activated'));
     
-    let _helper: ConfigHelper = FS_Proxy_Config_Helper.getConfigHelper();
+    let _helper: ConfigHelper = VSC_Config_Helper.getConfigHelper();
     let _config: Config = _helper.getConfig();
     
     let _hosts = new HostCollection();

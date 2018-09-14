@@ -10,7 +10,6 @@ import { UserPasswordHostConfig } from "../../host-config";
 
 export class UserPasswordSection implements ConfigSection, UserPasswordHostConfig {
     
-    method: string = 'user_password';
     host: string = '';
     port: number = 22;
     username: string = '';

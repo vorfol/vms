@@ -7,13 +7,14 @@ import { Disposable } from "vscode";
  * 
  */
 
-type simplyData = string | number | boolean | null;
+export type simplyData = string | number | boolean | null;
+export type valueData = simplyData | Array<ConfigData>;
 
 /**
  * 
  */
 export interface ConfigData {
-    [key: string] : (simplyData | Array<ConfigData>);
+    [key: string] : valueData;
 }
 
 /**

@@ -44,7 +44,7 @@ export class ConfigProvider {
         let cfg = this._config_holder['HostConfig'];
         if (cfg) {
             //update known properties only
-            ret.method = cfg.method || ret.method;
+            //ret.method = cfg.method || ret.method;
             ret.host = cfg.host || ret.host;
             ret.port = cfg.port || ret.port;
             ret.username = cfg.username || ret.username;

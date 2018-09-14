@@ -19,7 +19,7 @@ export let _log_this_file = console.log;
  * 
  * 
  */
-export class FS_Proxy_Config_Helper implements ConfigHelper {
+export class FS_Config_Helper implements ConfigHelper {
 
     dispose() {
         for(let disp of this._dispose) {
@@ -50,12 +50,12 @@ export class FS_Proxy_Config_Helper implements ConfigHelper {
         this.updateConfigStorage();
     }
 
-    private static _instance : FS_Proxy_Config_Helper | undefined = undefined;
-    static getConfigHelper() : FS_Proxy_Config_Helper {
-        if (FS_Proxy_Config_Helper._instance === undefined) {
-            FS_Proxy_Config_Helper._instance = new FS_Proxy_Config_Helper();
+    private static _instance : FS_Config_Helper | undefined = undefined;
+    static getConfigHelper() : FS_Config_Helper {
+        if (FS_Config_Helper._instance === undefined) {
+            FS_Config_Helper._instance = new FS_Config_Helper();
         }
-        return FS_Proxy_Config_Helper._instance;
+        return FS_Config_Helper._instance;
     }
     
     getConfig(): Config {

@@ -73,6 +73,19 @@
                     "type": "string",
                     "default": "**/{.vscode,node-modules}/*.*",
                     "description": "%properties.filter.exclude.description%"
+                },
+                "open-vms.host_collection": {
+                    "type": "object",
+                    "default": {
+                        "default": "default",
+                        "hosts" : [ {
+                            "label" : "default",
+                            "host" : "host",
+                            "port" : 22,
+                            "username" : ""
+                        }]
+                    },
+                    "description": "%properties.host_collection.description%"
                 }
             }
         }

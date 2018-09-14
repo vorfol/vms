@@ -11,10 +11,6 @@ let _localize = nls.loadMessageBundle();
 
 export class SSH_Settings implements UserPasswordHostConfig {
 
-    get method() {
-        return this._user_password.method;
-    }
-
     get host() {
         return this._user_password.host;
     }
