@@ -3,41 +3,42 @@ import {commands} from 'vscode';
 import {ExtensionContext} from 'vscode';
  
 import {RunBuildCommand} from './run-build-command';
-import { Configuration, SerializeHelper } from './configuration/config';
-import { WS_SerializeHelper } from './configuration/ws-config';
-import { ProxyConfiguration } from './configuration/proxy-config';
-//import { env } from 'vscode';
 
 import * as nls from 'vscode-nls';
-//import { FS_SerializeHelper } from './configuration/fs-config';
-import { InitCfg as IntConnectionCfg } from './create-ssh-client';
-import { InitCfg as IntFilterCfg } from './files-to-send';
+import { ConfigHelper } from './config_v2/config_v2';
+import { FS_Proxy_Config_Helper } from './config_v2/fs-config-helper';
+import { Config } from './config_v2/config_v2';
+import { InitCfg as FilesToSendInitCfg } from './files-to-send';
+import { InitCfg as ConnectionInitCfg } from './create-ssh-client';
 
 //const _lang_opt = { locale: env.language };
 //const _lang_opt = { locale: 'ru' };
 let _localize = nls.config()();
 
-const _section = 'open-vms';
-
-import {Test} from './configuration/config_v2';
-
-Test();
+let _helper : ConfigHelper | undefined = undefined;
+let _config : Config | undefined = undefined;
 
 export async function activate(context: ExtensionContext) {
 
     console.log(_localize('extension.activated', 'OpenVMS extension is activated'));
+    
+    if (!_helper) {
+        _helper =  FS_Proxy_Config_Helper.getConfigHelper();
+    }
 
-    let _serialize_helper: SerializeHelper = new WS_SerializeHelper(_section);
-    let _config: Configuration = new ProxyConfiguration(_serialize_helper);
+    if (!_config) {
+        _config = _helper.getConfig();
+    }
 
-    context.subscriptions.push(_serialize_helper);
-    context.subscriptions.push(_config);
+    context.subscriptions.push(_helper);
 
-    IntConnectionCfg(_config).then(() => {
-        console.log('IntConnectionCfg configured');
+    FilesToSendInitCfg(_config).then(() => {
+        console.log('FilesToSendInitCfg configured');
     });
-    IntFilterCfg(_config).then(() => {
-        console.log('IntFilterCfg configured');
+    
+    //test full path to Config object
+    ConnectionInitCfg(FS_Proxy_Config_Helper.getConfigHelper().getConfig()).then(() => {
+        console.log('ConnectionInitCfg configured');
     });
 
     context.subscriptions.push( commands.registerCommand('VMS.buildProject', async () => {
@@ -48,7 +49,9 @@ export async function activate(context: ExtensionContext) {
 
     context.subscriptions.push( commands.registerCommand('VMS.editProject', async () => {
         console.log('edit start');
-        await _config.edit();
+        if  (_helper ) {
+            await _helper.getEditor().invoke();
+        }
         console.log('edit end');
     }));
 

@@ -4,7 +4,7 @@ import { Uri } from 'vscode';
 import { workspace } from "vscode";
 import { Disposable } from "vscode";
 import { Event } from "vscode";
-import { WaitFireEventEmitter } from "../wait-fire-event-emitter";
+import { WaitFireEventEmitter } from "../common/wait-fire-event-emitter";
 //import { EventEmitter } from "vscode";
 
 import * as nls from 'vscode-nls';

@@ -1,9 +1,18 @@
+/**
+ * 
+ * 
+ * 
+ * DEPRECATED
+ * 
+ * 
+ * 
+ */
 
 import { Range, workspace, Uri, WorkspaceEdit, Position} from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { UserPasswordHostConfig, HostConfig } from './user-password-config';
 import { FilterConfig, CPP_FilterConfig } from './filter-config';
+import { UserPasswordHostConfig } from './host-config';
 
 export type ConnectMethod = 'user_password' | 'keys';
 
@@ -21,15 +30,16 @@ export class ConfigProvider {
     protected _loaded = false;
 
     constructor(protected _cfg_serializer: ConfigSerializer) {
+        throw new Error("Method not implemented.");
     }
 
     /** Hold configurations as ANY
      */
     protected _config_holder : any = {};
 
-    get host_configuration() : HostConfig {
+    get host_configuration() : UserPasswordHostConfig {
         //create default
-        let ret : HostConfig = new UserPasswordHostConfig();
+        let ret : UserPasswordHostConfig = {} as UserPasswordHostConfig;
         //test if cfg exist in holder
         let cfg = this._config_holder['HostConfig'];
         if (cfg) {
@@ -43,7 +53,7 @@ export class ConfigProvider {
         return ret;
     }
 
-    set host_configuration(cfg : HostConfig) {
+    set host_configuration(cfg : UserPasswordHostConfig) {
         this._config_holder['HostConfig'] = cfg;
     }
     get filter_configuration() : FilterConfig {
@@ -63,7 +73,7 @@ export class ConfigProvider {
     }
 
     Defaults() : boolean {
-        this.host_configuration = new UserPasswordHostConfig();
+        this.host_configuration = {} as UserPasswordHostConfig;
         return true;
     }
 

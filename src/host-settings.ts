@@ -1,3 +1,13 @@
+/**
+ * 
+ * 
+ * 
+ * DEPRECATED
+ * 
+ * 
+ * 
+ */
+
 import {window} from 'vscode';
 
 import {WorkspaceSettings} from './workspace-settings';
