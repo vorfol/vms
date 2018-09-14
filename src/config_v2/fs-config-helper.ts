@@ -113,7 +113,9 @@ export class FS_Config_Helper implements ConfigHelper {
     protected createFS_Storage(rootUri: Uri) : void {
         _log_this_file('createFS_Storage');
         this._file_uri = Uri.file(path.join(rootUri.fsPath, this._relative_file_name));
-        this._storage = new FS_ConfigStorage(this._file_uri.fsPath);
+
+        this._storage = this.createConcreteFS_Storage(this._file_uri);
+
         this._watcher = workspace.createFileSystemWatcher(this._file_uri.fsPath);
         this._watcher.onDidCreate(async (uri) => {
             _log_this_file('onDidCreate: ' + uri);
@@ -129,6 +131,11 @@ export class FS_Config_Helper implements ConfigHelper {
                 this._config.load();
             })
         });
+    }
+
+    protected createConcreteFS_Storage(uri: Uri) {
+        //TODO: test URI and return appropriate FS
+        return new FS_ConfigStorage(uri.fsPath);
     }
 
 }

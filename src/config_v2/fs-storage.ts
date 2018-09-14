@@ -11,9 +11,7 @@ export let _log_this_file = console.log;
   */
  export class FS_ConfigStorage implements ConfigStorage {
 
-    protected _filename: string;
-    constructor(filename: string) {
-        this._filename = filename;
+    constructor(protected _filename: string) {
     }
 
     protected _json_data: any = {};
