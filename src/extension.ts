@@ -5,39 +5,33 @@ import {ExtensionContext} from 'vscode';
 import {RunBuildCommand} from './run-build-command';
 
 import * as nls from 'vscode-nls';
-import { ConfigHelper } from './config_v2/config_v2';
 import { FS_Proxy_Config_Helper } from './config_v2/fs-config-helper';
-import { Config } from './config_v2/config_v2';
+
 import { InitCfg as FilesToSendInitCfg } from './files-to-send';
 import { InitCfg as ConnectionInitCfg } from './create-ssh-client';
+import { ConfigHelper, Config } from './config_v2/config_v2';
+import { HostCollection } from './config_v2/sections/host-collection';
 
 //const _lang_opt = { locale: env.language };
 //const _lang_opt = { locale: 'ru' };
 let _localize = nls.config()();
 
-let _helper : ConfigHelper | undefined = undefined;
-let _config : Config | undefined = undefined;
-
 export async function activate(context: ExtensionContext) {
 
     console.log(_localize('extension.activated', 'OpenVMS extension is activated'));
     
-    if (!_helper) {
-        _helper =  FS_Proxy_Config_Helper.getConfigHelper();
-    }
-
-    if (!_config) {
-        _config = _helper.getConfig();
-    }
-
-    context.subscriptions.push(_helper);
-
+    let _helper: ConfigHelper = FS_Proxy_Config_Helper.getConfigHelper();
+    let _config: Config = _helper.getConfig();
+    
+    let _hosts = new HostCollection();
+    _config.add(_hosts);
+    
     FilesToSendInitCfg(_config).then(() => {
         console.log('FilesToSendInitCfg configured');
     });
-    
+
     //test full path to Config object
-    ConnectionInitCfg(FS_Proxy_Config_Helper.getConfigHelper().getConfig()).then(() => {
+    ConnectionInitCfg(_config).then(() => {
         console.log('ConnectionInitCfg configured');
     });
 
@@ -49,11 +43,14 @@ export async function activate(context: ExtensionContext) {
 
     context.subscriptions.push( commands.registerCommand('VMS.editProject', async () => {
         console.log('edit start');
-        if  (_helper ) {
-            await _helper.getEditor().invoke();
-        }
+        //we have to save current configuration before edit
+        await _config.save();
+        let _editor = _helper.getEditor();
+        await _editor.invoke();
         console.log('edit end');
     }));
+
+    context.subscriptions.push(_helper);
 
     console.log('activation end');
 }

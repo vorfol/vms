@@ -1,5 +1,5 @@
-import { ConfigSection, ConfigData } from "./config_v2";
-import { UserPasswordHostConfig } from "../host-config";
+import { ConfigSection, ConfigData } from "../config_v2";
+import { UserPasswordHostConfig } from "../../host-config";
 
 /**
  *  ConfigSection implementations 

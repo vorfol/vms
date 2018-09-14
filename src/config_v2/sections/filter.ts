@@ -1,4 +1,4 @@
-import { ConfigData, ConfigSection } from "./config_v2";
+import { ConfigData, ConfigSection } from "../config_v2";
 
 export class FilterSection implements ConfigSection {
     include: string = '';

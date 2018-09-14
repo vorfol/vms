@@ -1,8 +1,8 @@
-import { ConfigHelper } from "./config_v2";
-import { FS_Proxy_Config_Helper } from "./fs-config-helper";
-import { UserPasswordSection } from "./user-password";
-import { FilterSection } from "./filter";
-import { HostCollection } from "./host-collection";
+import { ConfigHelper } from "../config_v2";
+import { FS_Proxy_Config_Helper } from "../fs-config-helper";
+import { UserPasswordSection } from "../sections/user-password";
+import { FilterSection } from "../sections/filter";
+import { HostCollection } from "../sections/host-collection";
 
 export let _log_this_file = console.log;
 //_log_this_file = function() {};

@@ -1,7 +1,7 @@
 import {Client} from 'ssh2';
 
 import * as nls from 'vscode-nls';
-import { UserPasswordSection } from './config_v2/user-password';
+import { UserPasswordSection } from './config_v2/sections/user-password';
 import { Config } from './config_v2/config_v2';
 import { SSH_Settings } from './ssh-settings';
 let _localize = nls.loadMessageBundle();
@@ -18,6 +18,7 @@ let _cfg: Config | undefined = undefined;
 export async function InitCfg(config: Config) {
     _cfg = config;
     _cfg.add(_user_password_section);
+    console.log('added ' + _user_password_section.name());
 }
 
 /**

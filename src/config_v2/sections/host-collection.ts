@@ -1,4 +1,4 @@
-import { ConfigData, ConfigSection } from "./config_v2";
+import { ConfigData, ConfigSection } from "../config_v2";
 import { UserPasswordSection } from "./user-password";
 
 export class LabeledUserPasswordSection extends UserPasswordSection {
