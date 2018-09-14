@@ -88,8 +88,9 @@ export class ConfigPool implements Config {
                             }
                         }
                         this._storage.fillEnd().then((ended) => {
-                            resolve(ended | ret_code);
-                            _log_this_file('load => ' + ((ended | ret_code)?'fail':'ok'));
+                            ret_code |= ended;
+                            resolve(ret_code);
+                            _log_this_file('load => ' + (ret_code?'fail':'ok'));
                         });
                     } else {
                         resolve(started); //didn't start
@@ -126,9 +127,10 @@ export class ConfigPool implements Config {
                             }
                         }
                         this._storage.storeEnd().then((ended) => {
-                            resolve(ended | ret_code);
+                            ret_code |= ended;
+                            resolve(ret_code);
                             this._savePromise = undefined;
-                            _log_this_file('save => ok');
+                            _log_this_file('save => ' + (ret_code?'fail':'ok'));
                         });
                     } else {
                         resolve(started); //didn't start

@@ -51,16 +51,22 @@ export class VSC_ConfigStorage implements ConfigStorage {
 
     storeData(section: string, data: ConfigData): Thenable<ConfigStorageActionResult> {
         return new Promise(async (resolve, reject) => {
+            let ret_code = ConfigStorageActionResult.ok;
             let configuration = workspace.getConfiguration(this._section);
             for(let key in data) {
                 let cfg_key = `${section}.${key}`;
-                configuration.update(cfg_key, data[key]).then(() => {}, (err) => {
-                    console.log('update failed: ' + cfg_key);
-                    console.log(err);
-                })
+                try {
+                    await configuration.update(cfg_key, data[key]);
+                } catch(err) {
+                    _log_this_file('update failed: ' + cfg_key);
+                    if (err instanceof Error) {
+                        _log_this_file(err.message);
+                    }
+                    ret_code |= ConfigStorageActionResult.some_data_failed;
+                };
             }
             _log_this_file('storeData ' + section);
-            resolve(ConfigStorageActionResult.ok);
+            resolve(ret_code);
         });
     }
 
