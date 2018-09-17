@@ -1,4 +1,5 @@
 import { Disposable } from "vscode";
+import { Event } from "vscode";
 
 /**
  * Base types and interfaces
@@ -7,14 +8,14 @@ import { Disposable } from "vscode";
  * 
  */
 
-export type simplyData = string | number | boolean | null;
-export type valueData = simplyData | Array<ConfigData>;
+export type SimplyData = string | number | boolean | null;
+export type ValueData = SimplyData | Array<ConfigData>;
 
 /**
  * 
  */
 export interface ConfigData {
-    [key: string] : valueData;
+    [key: string] : ValueData;
 }
 
 /**
@@ -41,7 +42,7 @@ export interface ConfigObject {
 /**
  * 
  */
-export enum ConfigStorageActionResult {
+export enum CSA_Result {
     ok = 0,
     fail = 1,
     prepare_failed = 2,
@@ -54,13 +55,13 @@ export enum ConfigStorageActionResult {
  */
 export interface ConfigStorage {
 
-    fillStart() : Thenable<ConfigStorageActionResult>;
-    fillData(section: string, data: ConfigData) : Thenable<ConfigStorageActionResult>;
-    fillEnd() : Thenable<ConfigStorageActionResult>;
+    fillStart() : Thenable<CSA_Result>;
+    fillData(section: string, data: ConfigData) : Thenable<CSA_Result>;
+    fillEnd() : Thenable<CSA_Result>;
 
-    storeStart() : Thenable<ConfigStorageActionResult>;
-    storeData(section: string, data: ConfigData) : Thenable<ConfigStorageActionResult>;
-    storeEnd() : Thenable<ConfigStorageActionResult>;
+    storeStart() : Thenable<CSA_Result>;
+    storeData(section: string, data: ConfigData) : Thenable<CSA_Result>;
+    storeEnd() : Thenable<CSA_Result>;
 
     isStoring(): boolean;
 }
@@ -72,8 +73,10 @@ export interface Config {
     add(cfg: ConfigSection) : boolean;
     get(section: string) : Thenable<ConfigSection|undefined>;
 
-    load() : Thenable<ConfigStorageActionResult>;
-    save() : Thenable<ConfigStorageActionResult>;
+    load() : Thenable<CSA_Result>;
+    save() : Thenable<CSA_Result>;
+
+    onDidChange: Event<null>;
 }
 
 /**
@@ -90,7 +93,7 @@ export interface ConfigHelper extends Disposable {
 
     getConfig() : Config;
 
-    getStorage() : ConfigStorage;
+    //getStorage() : ConfigStorage;
 
     getEditor() : ConfigEditor;
 

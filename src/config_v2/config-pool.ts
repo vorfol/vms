@@ -1,6 +1,8 @@
-import { Config, ConfigStorage, ConfigObject, ConfigSection, ConfigStorageActionResult } from "./config_v2";
+import { Config, ConfigStorage, ConfigObject, ConfigSection, CSA_Result } from "./config_v2";
 
 import * as nls from 'vscode-nls';
+import { EventEmitter } from "vscode";
+import { Event } from "vscode";
 let _localize = nls.loadMessageBundle();
 
 export let _log_this_file = console.log;
@@ -17,6 +19,22 @@ export let _log_this_file = console.log;
 
 export class ConfigPool implements Config {
 
+
+    private _changeEmitter = new EventEmitter<null>();
+    
+    onDidChange: Event<null> = this._changeEmitter.event;
+
+    private _fireImmediate: any = undefined;
+    private fireChangeSoon(): void {
+        if (this._fireImmediate) {
+            clearImmediate(this._fireImmediate);
+        }
+        this._fireImmediate = setImmediate(() => {
+            this._fireImmediate = undefined;
+            this._changeEmitter.fire();
+        });
+    }
+
     protected _storage: ConfigStorage;
 
     constructor(storage: ConfigStorage) {
@@ -29,10 +47,10 @@ export class ConfigPool implements Config {
         this.load();
     }
 
-    getStorage() : ConfigStorage {
-        _log_this_file('getStorage');
-        return this._storage;
-    }
+    // getStorage() : ConfigStorage {
+    //     _log_this_file('getStorage');
+    //     return this._storage;
+    // }
 
     protected _pool : ConfigObject = {};
 
@@ -60,32 +78,36 @@ export class ConfigPool implements Config {
         });
     }
 
-    protected _loadPromise : Thenable<ConfigStorageActionResult> | undefined = undefined;
-    load() : Thenable<ConfigStorageActionResult> {
+    protected _loadPromise : Thenable<CSA_Result> | undefined = undefined;
+    load() : Thenable<CSA_Result> {
         _log_this_file('load =');
         if (!this._loadPromise) {
-            this._loadPromise = new Promise<ConfigStorageActionResult>(async (resolve,reject) => {
+            this._loadPromise = new Promise<CSA_Result>(async (resolve,reject) => {
                 //do load
+                let changed = false;
                 this._storage.fillStart().then(async (started) => {
-                    if (started === ConfigStorageActionResult.ok) {
-                        let ret_code = ConfigStorageActionResult.ok;
+                    if (started === CSA_Result.ok) {
+                        let ret_code = CSA_Result.ok;
                         for(let section_name in this._pool) {
                             let cfg = this._pool[section_name];
                             if (cfg.name() === section_name) {
                                 let data = cfg.templateToFillFrom();
                                 try {
                                     let r = await this._storage.fillData(section_name, data);
-                                    if (r === ConfigStorageActionResult.ok) {
-                                        cfg.fillFrom(data);
+                                    if (r === CSA_Result.ok) {
+                                        changed = cfg.fillFrom(data) || changed;
                                     } else {
                                         ret_code |= r;
                                     }
                                 } catch (err) {
                                     _log_this_file( _localize('config_v2.filldata.failed', 'filling data("{0}") failed', section_name ));
                                     _log_this_file(err);
-                                    ret_code |= ConfigStorageActionResult.some_data_failed;
+                                    ret_code |= CSA_Result.some_data_failed;
                                 }
                             }
+                        }
+                        if (changed) {
+                            this.fireChangeSoon();
                         }
                         this._storage.fillEnd().then((ended) => {
                             ret_code |= ended;
@@ -104,15 +126,15 @@ export class ConfigPool implements Config {
         return this._loadPromise;
     }
 
-    protected _savePromise : Thenable<ConfigStorageActionResult> | undefined = undefined;
-    save() : Thenable<ConfigStorageActionResult> {
+    protected _savePromise : Thenable<CSA_Result> | undefined = undefined;
+    save() : Thenable<CSA_Result> {
         _log_this_file('save =');
         if (!this._savePromise) {
-            this._savePromise = new Promise<ConfigStorageActionResult>(async (resolve,reject) => {
+            this._savePromise = new Promise<CSA_Result>(async (resolve,reject) => {
                 //do save
                 this._storage.storeStart().then( async (started) => {
-                    if (started === ConfigStorageActionResult.ok) {
-                        let ret_code = ConfigStorageActionResult.ok;
+                    if (started === CSA_Result.ok) {
+                        let ret_code = CSA_Result.ok;
                         for(let section_name in this._pool) {
                             let cfg = this._pool[section_name];
                             if (cfg.name() === section_name) {
@@ -122,7 +144,7 @@ export class ConfigPool implements Config {
                                 } catch(err) {
                                     _log_this_file( _localize('config_v2.storedata.failed', 'storing data("{0}") failed', section_name ));
                                     _log_this_file(err);
-                                    ret_code |= ConfigStorageActionResult.some_data_failed;
+                                    ret_code |= CSA_Result.some_data_failed;
                                 }
                             }
                         }

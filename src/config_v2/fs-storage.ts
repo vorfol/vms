@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import { ConfigStorageActionResult, ConfigStorage, ConfigData } from "./config_v2";
+import { CSA_Result, ConfigStorage, ConfigData } from "./config_v2";
 
 export let _log_this_file = console.log;
 //_log_this_file = function() {};
@@ -15,22 +15,22 @@ export let _log_this_file = console.log;
     }
 
     protected _json_data: any = {};
-    protected _fillStartPromise: Thenable<ConfigStorageActionResult> | undefined;
-    fillStart(): Thenable<ConfigStorageActionResult> {
+    protected _fillStartPromise: Thenable<CSA_Result> | undefined;
+    fillStart(): Thenable<CSA_Result> {
         _log_this_file('fillStart =');
         if (!this._fillStartPromise) {
-            this._fillStartPromise = new Promise<ConfigStorageActionResult>(async (resolve, reject) => {
+            this._fillStartPromise = new Promise<CSA_Result>(async (resolve, reject) => {
                 fs.readFile(this._filename, (err, data) => {
                     if (err) {
-                        resolve(ConfigStorageActionResult.prepare_failed);
+                        resolve(CSA_Result.prepare_failed);
                     } else {
                         let content = data.toString('utf8');
                         try {
                             this._json_data = JSON.parse(content);
-                            resolve(ConfigStorageActionResult.ok);
+                            resolve(CSA_Result.ok);
                             _log_this_file('fillStart => ok');
                         } catch (error) {
-                            resolve(ConfigStorageActionResult.prepare_failed);
+                            resolve(CSA_Result.prepare_failed);
                             _log_this_file('fillStart => fail');
                         }
                     }
@@ -42,7 +42,7 @@ export let _log_this_file = console.log;
         return this._fillStartPromise;
     }     
 
-    fillData(section: string, data: ConfigData): Thenable<ConfigStorageActionResult> {
+    fillData(section: string, data: ConfigData): Thenable<CSA_Result> {
         if (this._json_data && this._json_data[section]) {
             let json_section = this._json_data[section];
             for(let key in data) {
@@ -51,45 +51,45 @@ export let _log_this_file = console.log;
                 }
             }
             _log_this_file('fillData => ok ' + section);
-            return Promise.resolve(ConfigStorageActionResult.ok);
+            return Promise.resolve(CSA_Result.ok);
         } else {
             _log_this_file('fillData => fail ' + section);
-            return Promise.resolve(ConfigStorageActionResult.some_data_failed);
+            return Promise.resolve(CSA_Result.some_data_failed);
         }
     }
 
-    fillEnd(): Thenable<ConfigStorageActionResult> {
+    fillEnd(): Thenable<CSA_Result> {
         _log_this_file('fillEnd');
         this._json_data = {};
-        return Promise.resolve(ConfigStorageActionResult.ok);
+        return Promise.resolve(CSA_Result.ok);
     }
 
-    storeStart(): Thenable<ConfigStorageActionResult> {
+    storeStart(): Thenable<CSA_Result> {
         _log_this_file('storeStart');
         this._json_data = {};
-        return Promise.resolve(ConfigStorageActionResult.ok);
+        return Promise.resolve(CSA_Result.ok);
     }
 
-    storeData(section: string, data: ConfigData): Thenable<ConfigStorageActionResult> {
+    storeData(section: string, data: ConfigData): Thenable<CSA_Result> {
         //TODO: test if section was added before?
         _log_this_file('storeData ' + section);
         this._json_data[section] = data;
-        return Promise.resolve(ConfigStorageActionResult.ok);
+        return Promise.resolve(CSA_Result.ok);
     }
 
-    protected _storePromise: Thenable<ConfigStorageActionResult> | undefined;
-    storeEnd(): Thenable<ConfigStorageActionResult> {
+    protected _storePromise: Thenable<CSA_Result> | undefined;
+    storeEnd(): Thenable<CSA_Result> {
         _log_this_file('storeEnd =');
         if (!this._storePromise) {
-            this._storePromise = new Promise<ConfigStorageActionResult>((resolve, reject) => {
+            this._storePromise = new Promise<CSA_Result>((resolve, reject) => {
                 fs.writeFile(this._filename, JSON.stringify(this._json_data, null, 4), (err) => {
                     this._json_data = {};
                     if (err) {
                         _log_this_file('storeEnd => fail');
-                        resolve(ConfigStorageActionResult.end_failed);
+                        resolve(CSA_Result.end_failed);
                     } else {
                         _log_this_file('storeEnd => ok');
-                        resolve(ConfigStorageActionResult.ok);
+                        resolve(CSA_Result.ok);
                     }
                     this._storePromise = undefined;
                 });

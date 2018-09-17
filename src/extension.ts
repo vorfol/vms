@@ -10,7 +10,7 @@ import { InitCfg as FilesToSendInitCfg } from './files-to-send';
 import { InitCfg as ConnectionInitCfg } from './create-ssh-client';
 import { ConfigHelper, Config } from './config_v2/config_v2';
 import { HostCollection } from './config_v2/sections/host-collection';
-import { VFS_Config_Helper } from './config_v2/vfs-config-helper';
+import { VSC_Config_Helper } from './config_v2/vsc-config-helper';
 
 //const _lang_opt = { locale: env.language };
 //const _lang_opt = { locale: 'ru' };
@@ -20,7 +20,7 @@ export async function activate(context: ExtensionContext) {
 
     console.log(_localize('extension.activated', 'OpenVMS extension is activated'));
     
-    let _helper: ConfigHelper = VFS_Config_Helper.getConfigHelper();
+    let _helper: ConfigHelper = VSC_Config_Helper.getConfigHelper();
     let _config: Config = _helper.getConfig();
     
     let _hosts = new HostCollection();

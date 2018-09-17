@@ -1,4 +1,4 @@
-import { ConfigStorageActionResult } from "./config_v2";
+import { CSA_Result } from "./config_v2";
 import { Uri } from "vscode";
 import { workspace } from "vscode";
 import { FS_ConfigStorage } from "./fs-storage";
@@ -18,18 +18,18 @@ export class VFS_ConfigStorage extends FS_ConfigStorage {
         super(_fileUri.fsPath);
     }   
 
-    fillStart(): Thenable<ConfigStorageActionResult> {
+    fillStart(): Thenable<CSA_Result> {
         _log_this_file('fillStart =');
         if (!this._fillStartPromise) {
-            this._fillStartPromise = new Promise<ConfigStorageActionResult>(async (resolve, reject) => {
+            this._fillStartPromise = new Promise<CSA_Result>(async (resolve, reject) => {
                 try {
                     let text_doc = await workspace.openTextDocument(this._fileUri);
                     let content = text_doc.getText();
                     this._json_data = JSON.parse(content);
-                    resolve(ConfigStorageActionResult.ok);
+                    resolve(CSA_Result.ok);
                     _log_this_file('fillStart => ok');
                 } catch (error) {
-                    resolve(ConfigStorageActionResult.prepare_failed);
+                    resolve(CSA_Result.prepare_failed);
                     _log_this_file('fillStart => fail');
                 }
                 this._fillStartPromise = undefined;
@@ -39,10 +39,10 @@ export class VFS_ConfigStorage extends FS_ConfigStorage {
         return this._fillStartPromise;
     }     
 
-    storeEnd(): Thenable<ConfigStorageActionResult> {
+    storeEnd(): Thenable<CSA_Result> {
         _log_this_file('storeEnd =');
         if (!this._storePromise) {
-            this._storePromise = new Promise<ConfigStorageActionResult>(async (resolve, reject) => {
+            this._storePromise = new Promise<CSA_Result>(async (resolve, reject) => {
                 try {
                     let range : Range | undefined = undefined;
                     try {
@@ -63,12 +63,12 @@ export class VFS_ConfigStorage extends FS_ConfigStorage {
                     if (status) {
                         let text_doc = await workspace.openTextDocument(this._fileUri);
                         let saved = await text_doc.save();
-                        resolve(saved?ConfigStorageActionResult.ok:ConfigStorageActionResult.end_failed);
+                        resolve(saved?CSA_Result.ok:CSA_Result.end_failed);
                     } else {
-                        resolve(ConfigStorageActionResult.end_failed);
+                        resolve(CSA_Result.end_failed);
                     }
                 } catch(err) {
-                    resolve(ConfigStorageActionResult.end_failed);
+                    resolve(CSA_Result.end_failed);
                 }
             })
         }

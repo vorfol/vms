@@ -62,9 +62,9 @@ export class FS_Config_Helper implements ConfigHelper {
         return this._config;
     }
 
-    getStorage(): ConfigStorage {
-        return this._storage;
-    }
+    // getStorage(): ConfigStorage {
+    //     return this._storage;
+    // }
 
     getEditor(): ConfigEditor {
         return this._editor;

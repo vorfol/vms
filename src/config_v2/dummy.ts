@@ -1,4 +1,4 @@
-import { ConfigEditor, ConfigStorageActionResult, ConfigData, ConfigStorage } from "./config_v2";
+import { ConfigEditor, CSA_Result, ConfigData, ConfigStorage } from "./config_v2";
 
 /**
  * Dummy implementations
@@ -12,28 +12,28 @@ export class DummyStorage implements ConfigStorage {
         return false;
     }
 
-    fillStart(): Thenable<ConfigStorageActionResult> {
-        return Promise.resolve(ConfigStorageActionResult.prepare_failed);
+    fillStart(): Thenable<CSA_Result> {
+        return Promise.resolve(CSA_Result.prepare_failed);
     }     
     
-    fillData(section: string, data: ConfigData): Thenable<ConfigStorageActionResult> {
-        return Promise.resolve(ConfigStorageActionResult.some_data_failed);
+    fillData(section: string, data: ConfigData): Thenable<CSA_Result> {
+        return Promise.resolve(CSA_Result.some_data_failed);
     }
 
-    fillEnd(): Thenable<ConfigStorageActionResult> {
-        return Promise.resolve(ConfigStorageActionResult.end_failed);
+    fillEnd(): Thenable<CSA_Result> {
+        return Promise.resolve(CSA_Result.end_failed);
     }
 
-    storeStart(): Thenable<ConfigStorageActionResult> {
-        return Promise.resolve(ConfigStorageActionResult.prepare_failed);
+    storeStart(): Thenable<CSA_Result> {
+        return Promise.resolve(CSA_Result.prepare_failed);
     }
 
-    storeData(section: string, data: ConfigData): Thenable<ConfigStorageActionResult> {
-        return Promise.resolve(ConfigStorageActionResult.some_data_failed);
+    storeData(section: string, data: ConfigData): Thenable<CSA_Result> {
+        return Promise.resolve(CSA_Result.some_data_failed);
     }
 
-    storeEnd(): Thenable<ConfigStorageActionResult> {
-        return Promise.resolve(ConfigStorageActionResult.end_failed);
+    storeEnd(): Thenable<CSA_Result> {
+        return Promise.resolve(CSA_Result.end_failed);
     }
  }
 
