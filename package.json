@@ -81,11 +81,13 @@
                 },
                 "open-vms.host_collection.hosts": {
                     "type": "array",
-                    "default": [{
-                        "host": "",
-                        "port": 0,
-                        "username": ""
-                    }],
+                    "default": [
+                        {
+                            "host": "",
+                            "port": 0,
+                            "username": ""
+                        }
+                    ],
                     "description": "array of hosts"
                 }
             }

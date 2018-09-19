@@ -122,3 +122,63 @@ export class Sync_v1 implements Synchronizer {
     }
 
 }
+
+/**
+ * 
+ */
+
+import * as fs from 'fs';
+
+class FS_Handle implements Handle {
+    _handle: number = 0;
+}
+
+function isFS_Handle(candidate: any): candidate is FS_Handle {
+    return typeof candidate._handle === 'number';
+}
+
+export class FS_FileSystem implements FileSystem {
+    open(path: Uri, mode: Mode): Thenable<Handle> {
+        return new Promise<Handle>((resolve, reject) => {
+            let s_mode = ((mode === Mode.write)?'w':'r');
+            fs.open(path.fsPath, s_mode, (err, fd) => {
+                if (err) {
+                    resolve(new FS_Handle());
+                } else {
+                    let h = new FS_Handle();
+                    h._handle = fd;
+                    resolve(h);
+                }
+            });
+        });
+    }    
+    close(h: Handle): Thenable<boolean> {
+        if (isFS_Handle(h)) {
+            return new Promise<boolean>((resolve, reject) => {
+                fs.close(h._handle, (err) => {
+                    if (err) {
+                        resolve(false);
+                    } else {
+                        resolve(true);
+                    }
+                });
+            });
+        } else {
+            return Promise.resolve(false);
+        }
+    }
+    read(h: Handle, n?: number | undefined): Thenable<Buffer> {
+        throw new Error("Method not implemented.");
+    }
+    write(h: Handle, buff: Buffer): Thenable<number> {
+        throw new Error("Method not implemented.");
+    }
+    stat(path: Uri, need: Stat): Thenable<Stat> {
+        throw new Error("Method not implemented.");
+    }
+    files(include: string, exclude: string): IterableIterator<Uri> {
+        throw new Error("Method not implemented.");
+    }
+
+
+}
