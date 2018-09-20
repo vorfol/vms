@@ -1,9 +1,14 @@
 import { ConfigData, ConfigSection } from "../config_v2";
 import { UserPasswordSection } from "./user-password";
+import { isString } from "util";
 
 export class LabeledUserPasswordSection extends UserPasswordSection {
 
     label: string = '';
+
+    static is(candidate: any): candidate is LabeledUserPasswordSection {
+        return isString(candidate.label) && UserPasswordSection.is(candidate);
+    }
 
     name(): string {
         return this.label;

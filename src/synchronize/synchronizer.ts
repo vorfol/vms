@@ -14,32 +14,21 @@ export interface SyncWatcher {
 
 
 export interface Synchronizer {
-    synchronize() : Thenable<boolean>;
-}
-
-export interface Handle {
-
-}
-
-export enum Mode {
-    read,
-    write
+    synchronize() : Promise<boolean>;
 }
 
 export interface Stat {
     size_in_bytes?: number;
-    mod_time?: Date;
+    mod_time?: Date|null;
     crc32?: number;
 }
 
-export interface FileSystem {
+export interface FS_Wrapper {
 
-    open(path: Uri, mode: Mode) : Thenable<Handle>;
-    close(h: Handle) : Thenable<boolean>;
-    read(h:Handle, n?: number) : Thenable<Buffer>;
-    write(h: Handle, buff: Buffer) : Thenable<number>;
-    stat(path: Uri, need: Stat): Thenable<Stat>;
-    files(include: string, exclude: string): IterableIterator<Uri>;
+    read(path: Uri) : Promise<Buffer|undefined>;
+    write(path: Uri, buff: Buffer) : Promise<boolean>;
+    stat(path: Uri, need: Stat): Promise<Stat|undefined>;
+    files(include: string, exclude: string): Promise<Uri[]>;
 }
 
 /**
@@ -51,24 +40,24 @@ export class Sync_v1 implements Synchronizer {
     protected _filter: FilterSection = new FilterSection();
     
     constructor(protected _cfg: Config, 
-                protected _primary: FileSystem, 
-                protected _secondary: FileSystem) {
+                protected _primary: FS_Wrapper, 
+                protected _secondary: FS_Wrapper) {
         
         _cfg.add(this._filter);
     }
     
     protected _syncPromise: Promise<boolean> | undefined = undefined;
-    synchronize(): Thenable<boolean> {
+    synchronize(): Promise<boolean> {
         if (!this._syncPromise) {
             this._syncPromise = new Promise<boolean>(async (resolve, reject) => {
                 let ret_code = false;
-                let file_iter = this._primary.files(this._filter.include, this._filter.exclude);
-                for(let uri of file_iter) {
-                    try {
+                try {
+                    let uris = await this._primary.files(this._filter.include, this._filter.exclude);
+                    for(let uri of uris) {
                         ret_code = (await this.syncFile(uri)) && ret_code;
-                    } catch(err) {
-                        ret_code = false;
                     }
+                } catch(err) {
+                    ret_code = false;
                 }
                 resolve(ret_code);
                 this._syncPromise = undefined;
@@ -77,7 +66,7 @@ export class Sync_v1 implements Synchronizer {
         return this._syncPromise;
     }
 
-    protected syncFile(path: Uri) : Thenable<boolean> {
+    protected syncFile(path: Uri) : Promise<boolean> {
         return new Promise<boolean>(async (resolve, reject) => {
             let result = true;
             if (await this.testFile(path)) {
@@ -88,15 +77,15 @@ export class Sync_v1 implements Synchronizer {
     }
 
     /**
-     * test crc32. thing to override
+     * test modification timestamp. thing to override
      */
-    protected testFile(path: Uri) : Thenable<boolean> {
+    protected testFile(path: Uri) : Promise<boolean> {
         return new Promise<boolean>(async (resolve, reject) => {
-            let stat : Stat = {crc32: 0};
+            let stat : Stat = {mod_time: null};
             try {
                 let primaryStat = await this._primary.stat(path, stat);
                 let secondaryStat = await this._secondary.stat(path, stat);
-                let doSend = (primaryStat.crc32 != secondaryStat.crc32);
+                let doSend = primaryStat && (!secondaryStat || (primaryStat.mod_time != secondaryStat.mod_time));
                 resolve(doSend);
             } catch(err) {
                 resolve(true);  //do send if getting stats is failed
@@ -104,16 +93,11 @@ export class Sync_v1 implements Synchronizer {
         });
     }
 
-    protected sendFile(path: Uri) : Thenable<boolean> {
+    protected sendFile(path: Uri) : Promise<boolean> {
         return new Promise<boolean>(async (resolve, reject) => {
             try {
-                let h_prim = await this._primary.open(path, Mode.read);
-                let buff = await this._primary.read(h_prim);
-                this._primary.close(h_prim);
-                let h_sec = await this._secondary.open(path, Mode.write);
-                let written = await this._secondary.write(h_sec, buff);
-                this._secondary.close(h_sec);
-                let result = (written === buff.length);
+                let buff = await this._primary.read(path);
+                let result = !buff || await this._secondary.write(path, buff);
                 resolve(result);
             } catch(err) {
                 resolve(false);
@@ -128,57 +112,111 @@ export class Sync_v1 implements Synchronizer {
  */
 
 import * as fs from 'fs';
+import * as fg from 'fast-glob';
+import { IPartialOptions } from "fast-glob/out/managers/options";
 
-class FS_Handle implements Handle {
-    _handle: number = 0;
-}
 
-function isFS_Handle(candidate: any): candidate is FS_Handle {
-    return typeof candidate._handle === 'number';
-}
+export class FS_FileSystem implements FS_Wrapper {
 
-export class FS_FileSystem implements FileSystem {
-    open(path: Uri, mode: Mode): Thenable<Handle> {
-        return new Promise<Handle>((resolve, reject) => {
-            let s_mode = ((mode === Mode.write)?'w':'r');
-            fs.open(path.fsPath, s_mode, (err, fd) => {
+    protected _roots: Uri[] = [];
+    constructor(roots: Uri[]) {
+        for(let root of roots) {
+            if (root.scheme === 'file') {
+                this._roots.push(root);
+            }
+        }
+    }
+
+    testInRoots(path:Uri) : boolean {
+        let ret = this._roots.some((root, idx)=>{
+            return root.scheme === path.scheme &&
+                   path.fsPath.startsWith(root.fsPath) ;
+        });
+        return ret;
+    }
+
+    read(path: Uri): Promise<Buffer|undefined> {
+        if (!this.testInRoots(path)) {
+            return Promise.resolve(undefined);
+        }
+        return new Promise<Buffer|undefined>((resolve, reject)=>{
+            fs.promises.readFile(path.fsPath);
+            fs.readFile(path.fsPath, (err, data)=>{
                 if (err) {
-                    resolve(new FS_Handle());
+                    resolve(undefined);
                 } else {
-                    let h = new FS_Handle();
-                    h._handle = fd;
-                    resolve(h);
+                    resolve(data);
                 }
             });
         });
-    }    
-    close(h: Handle): Thenable<boolean> {
-        if (isFS_Handle(h)) {
-            return new Promise<boolean>((resolve, reject) => {
-                fs.close(h._handle, (err) => {
+    }
+
+    write(path: Uri, buff: Buffer): Promise<boolean> {
+        if (!this.testInRoots(path)) {
+            return Promise.resolve(false);
+        }
+        return new Promise<boolean>((resolve, reject)=>{
+            fs.writeFile(path.fsPath, buff, (err)=>{
+                if (err) {
+                    resolve(false);
+                } else {
+                    resolve(true);
+                }
+            });
+        });
+    }
+
+    stat(path: Uri, need: Stat): Promise<Stat|undefined> {
+        if (need.mod_time !== undefined || need.size_in_bytes !== undefined) {
+            if (!this.testInRoots(path)) {
+                return Promise.resolve(undefined);
+            }
+            return new Promise<Stat>((resolve, reject)=>{
+                fs.stat(path.fsPath, (err, stats) => {
                     if (err) {
-                        resolve(false);
+                        resolve(undefined);
                     } else {
-                        resolve(true);
+                        let ret_stats: Stat = {};
+                        if (need.mod_time !== undefined) {
+                            ret_stats.mod_time = stats.mtime;
+                        }
+                        if (need.size_in_bytes !== undefined) {
+                            ret_stats.size_in_bytes = stats.size;
+                        }
+                        resolve(ret_stats);
                     }
                 });
             });
         } else {
-            return Promise.resolve(false);
+            //throw new Error("Function unsupported.");
+            return Promise.resolve(undefined);
         }
     }
-    read(h: Handle, n?: number | undefined): Thenable<Buffer> {
-        throw new Error("Method not implemented.");
-    }
-    write(h: Handle, buff: Buffer): Thenable<number> {
-        throw new Error("Method not implemented.");
-    }
-    stat(path: Uri, need: Stat): Thenable<Stat> {
-        throw new Error("Method not implemented.");
-    }
-    files(include: string, exclude: string): IterableIterator<Uri> {
-        throw new Error("Method not implemented.");
-    }
 
+    files(include: string, exclude: string): Promise<Uri[]> {
+        return new Promise<Uri[]>((resolve,reject)=>{
+            let opt : IPartialOptions = {};
+            //opt.ignore = exclude.split(',');
+            opt.cwd = this._roots[0].fsPath;
+            fg.async(include, opt).catch((err)=>{
+            //fg.async(include).catch((err)=>{
+                resolve([]);
+            }).then((result)=>{
+                if (!result) {
+                    resolve([]);
+                } else {
+                    let uris: Uri[] = [];
+                    for(let item of result) {
+                        if (typeof item === 'string') {
+                            uris.push(Uri.file(item));
+                        } else if (item.path) {
+                            uris.push(Uri.file(item.path));
+                        }
+                    }
+                    resolve(uris);
+                }
+            });
+        });
+    }
 
 }

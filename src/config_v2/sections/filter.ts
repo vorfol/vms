@@ -1,6 +1,11 @@
 import { ConfigData, ConfigSection } from "../config_v2";
 
 export class FilterSection implements ConfigSection {
+
+    static is(candidate: ConfigSection): candidate is FilterSection {
+        return candidate instanceof FilterSection;
+    }
+
     include: string = '';
     exclude: string = '';
 
@@ -33,4 +38,3 @@ export class FilterSection implements ConfigSection {
     }
 
 }
-

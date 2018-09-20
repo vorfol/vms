@@ -1,5 +1,6 @@
 import { ConfigSection, ConfigData } from "../config_v2";
 import { UserPasswordHostConfig } from "../../host-config";
+import { isNumber, isString } from "util";
 
 /**
  *  ConfigSection implementations 
@@ -14,6 +15,13 @@ export class UserPasswordSection implements ConfigSection, UserPasswordHostConfi
     port: number = 22;
     username: string = '';
     password: string = '';
+
+    static is(candidate: any): candidate is UserPasswordHostConfig {
+        return isString(candidate.host) && 
+               isNumber(candidate.port) &&
+               isString(candidate.username) &&
+               isString(candidate.password);
+    }
 
     static readonly _section = 'connection';
 
